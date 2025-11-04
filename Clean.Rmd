@@ -1,0 +1,45 @@
+---
+title: "LLM"
+output: html_document
+date: "2025-11-04"
+---
+
+```{r}
+library(ellmer);
+library(tidyverse);
+library(furrr); # for parallel map
+library(kableExtra);
+library(jsonlite)
+```
+```{r}
+
+```
+
+```{r}
+format_table <- function(df, max_length = 150) {
+  head_df <- data.frame(df %>% head(5))
+  # Function to truncate individual text entries
+  truncate_text <- function(text, max_length) {
+    text <- gsub("[\r\n]", "", text)
+    return (
+      ifelse(nchar(text) > max_length, 
+             paste0(substr(text, 1, max_length), "..."), 
+             text)
+    )
+  }
+  
+  # Loop over all columns that are character type and apply truncation
+  for (col in colnames(head_df)) {
+    if (is.character(head_df[[col]])) {
+      head_df[[col]] <- sapply(head_df[[col]], truncate_text, max_length = max_length)
+    }
+  }
+  
+  # Return the modified data frame
+  head_df %>%
+    kbl() %>%
+    kable_styling(bootstrap_options = c("striped", "hover", "condensed"), font_size=12)
+}
+
+```
+

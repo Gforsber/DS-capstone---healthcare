@@ -58,7 +58,7 @@ format_table <- function(df, max_length = 150) {
 ```
 
 ```{r}
-Sys.setenv(OPENAI_API_KEY = "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")
+Sys.setenv(OPENAI_API_KEY = "")
 ```
 
 ## Test

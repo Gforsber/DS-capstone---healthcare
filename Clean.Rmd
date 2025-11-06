@@ -288,28 +288,6 @@ write_csv(ctg_clean, "Data/ctg_clean.csv")
 write_csv(clean_map, "Data/clean_map.csv")
 ```
 
-```{r}
-clean_map <- llm_normalize_conditions_one(ctg100$Conditions)
-ctg100_clean <- ctg100 %>%
-  mutate(Condition_clean = clean_map$Condition_clean) %>%
-  select(Conditions, Condition_clean)
 
-unique(ctg100_clean$Condition_clean)
-clean_map
-ctg100_clean_filtered <- ctg100_clean %>%
-  filter(Condition_clean == "Other neoplasms")
-unique(ctg100_clean_filtered$Conditions)
-#unique(ctg100_clean$Conditions)
-```
 
-```{r}
-print(ctg100_clean[, c("Conditions", "Conditions_clean")], n = 20)
-```
-```{r}
-ctg100_clean %>%
-  select(Conditions, Conditions_clean) %>%
-  head(100) %>%  # show first 20 rows
-  kbl() %>%
-  kable_styling(bootstrap_options = c("striped", "hover", "condensed"))
-```
 

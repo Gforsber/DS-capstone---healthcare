@@ -280,9 +280,9 @@ fewshot_assistant <- jsonlite::toJSON(list(
 ### Apply
 ```{r}
 clean_map <- llm_normalize_conditions_one(ctg_studies$Conditions)
-ctg_clean <- ctg_studies %>%
-  mutate(Condition_clean = clean_map$Condition_clean) %>%
-  select(Conditions, Condition_clean)
+clean_map <- read_csv("Data/clean_map.csv")
+ctg_clean <- ctg_studies %>% mutate(Condition_clean = clean_map$Condition_clean)
+
 
 write_csv(ctg_clean, "Data/ctg_clean.csv")
 write_csv(clean_map, "Data/clean_map.csv")

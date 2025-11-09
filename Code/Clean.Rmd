@@ -18,7 +18,7 @@ library(tibble)
 library(stringr)
 ```
 ```{r}
-ctg_studies <- read_csv("Data/ctg-studies.csv")
+ctg_studies <- read_csv("../Data/ctg-studies.csv")
 cancer <- read_csv("Data/cancer.csv")
 ```
 ```{r}
@@ -26,7 +26,7 @@ unique(cancer$cause)
 ```
 ```{r}
 ctg100 <- head(ctg_studies, 100)
-# unique(ctg100$Conditions)
+
 ```
 
 ```{r}
@@ -68,7 +68,6 @@ allowed_labels <- c(
   "Soft tissue and other extraosseous sarcomas",
   "Malignant neoplasm of bone and articular cartilage",
   "Neuroblastoma and other peripheral nervous cell tumors",
-  "Neoplasms",
   "Esophageal cancer",
   "Eye cancer",
   "Stomach cancer",
@@ -280,16 +279,238 @@ fewshot_assistant <- jsonlite::toJSON(list(
 ### Apply
 ```{r}
 clean_map <- llm_normalize_conditions_one(ctg_studies$Conditions)
-clean_map <- read_csv("Data/clean_map.csv")
 ctg_clean <- ctg_studies %>% mutate(Condition_clean = clean_map$Condition_clean)
 
 
-write_csv(ctg_clean, "Data/ctg_clean.csv")
-write_csv(clean_map, "Data/clean_map.csv")
+write_csv(ctg_clean, "../Data/ctg_clean.csv")
+write_csv(clean_map, "../Data/clean_map.csv")
+```
+## Clean Sponsor
+```{r}
+
+`%||%` <- function(x, y) if (is.null(x) || length(x) == 0) y else x
+             
+# helper if you don't already have it
+chunk_vec <- function(x, size) {
+  split(x, ceiling(seq_along(x) / size))
+}
+
+llm_normalize_sponsors <- function(
+  sponsors,
+  model = "gpt-4.1-mini",
+  batch_size = 50,
+  temperature = 0
+) {
+  api_key <- Sys.getenv("OPENAI_API_KEY")
+  if (identical(api_key, "")) {
+    stop("Set OPENAI_API_KEY via Sys.setenv().", call. = FALSE)
+  }
+
+  allowed_types <- c(
+    "Academic",
+    "Hospital / medical center",
+    "Industry",
+    "Cooperative group / network",
+    "Research institute / foundation",
+    "Government / public agency",
+    "Individual",
+    "Other / unknown"
+  )
+
+  strict_rules <- paste0(
+    "You normalize clinical trial sponsor names.\n",
+    "\nTASK\n",
+    "For each input sponsor string, output:\n",
+    "- \"sponsor_clean\": a canonical, cleaned sponsor name\n",
+    "   (fix casing, remove IDs, remove duplicate site descriptors,\n",
+    "    keep the main institution or company; no translation).\n",
+    "- \"sponsor_type\": ONE of these categories:\n",
+    paste0("   - ", allowed_types, collapse = "\n"),
+    "\nOUTPUT FORMAT (VERY IMPORTANT)\n",
+    "- Return ONLY a STRICT JSON array of objects, no prose, no code fences.\n",
+    "- Each object must be:\n",
+    "  {\"input\":\"<original>\",\"sponsor_clean\":\"<cleaned>\",\"sponsor_type\":\"<one category>\"}\n",
+    "- Preserve input order.\n",
+    "- No extra fields.\n",
+    "\nCLASSIFICATION RULES\n",
+    "1) \"Academic\": Universities, colleges, academic departments, comprehensive cancer centers\n",
+    "   primarily embedded in universities.\n",
+    "2) \"Hospital / medical center\": General hospitals, university hospitals, cancer hospitals,\n",
+    "   health systems, medical centers.\n",
+    "3) \"Industry\": Pharmaceutical, biotech, device, diagnostics, or for-profit companies.\n",
+    "4) \"Cooperative group / network\": Multi-center oncology groups, trial networks, consortia.\n",
+    "5) \"Research institute / foundation\": Independent research institutes, non-profit foundations\n",
+    "   primarily focused on research or cancer.\n",
+    "6) \"Government / public agency\": NIH, NCI, national health services, ministries, public insurers.\n",
+    "7) \"Individual\": A single person’s name without institutional keywords.\n",
+    "8) \"Other / unknown\": Anything that does not clearly fit above.\n",
+    "\nNORMALIZATION DETAILS\n",
+    "- Keep key institutional names (e.g., \"Sun Yat-sen University\").\n",
+    "- Drop internal building names, department numbers, or IDs when not essential.\n",
+    "- If multiple entities appear (e.g., group + hospital), choose the primary sponsor\n",
+    "  (usually the organization whose name dominates or is first).\n",
+    "- Do NOT invent organizations; if unclear, lightly clean the string.\n",
+    "- Always choose exactly ONE sponsor_type per record from the allowed list.\n",
+    "- Be conservative: if unsure between two types, choose \"Other / unknown\".\n"
+  )
+
+  system_prompt <- strict_rules
+
+  # few-shot anchors
+  fewshot_user <- paste0(
+    "Normalize and classify these sponsors:\n",
+    "- \"Sun Yat-sen University\"\n",
+    "- \"General University Hospital, Prague\"\n",
+    "- \"Novartis Pharmaceuticals\"\n",
+    "- \"Alliance for Clinical Trials in Oncology\"\n",
+    "- \"Medical Research Council\"\n",
+    "- \"M.D. Anderson Cancer Center\"\n",
+    "- \"Jakob Kristian Jakobsen\"\n"
+  )
+
+  fewshot_assistant <- jsonlite::toJSON(list(
+    list(
+      input = "Sun Yat-sen University",
+      sponsor_clean = "Sun Yat-sen University",
+      sponsor_type = "Academic"
+    ),
+    list(
+      input = "General University Hospital, Prague",
+      sponsor_clean = "General University Hospital, Prague",
+      sponsor_type = "Hospital / medical center"
+    ),
+    list(
+      input = "Novartis Pharmaceuticals",
+      sponsor_clean = "Novartis Pharmaceuticals",
+      sponsor_type = "Industry"
+    ),
+    list(
+      input = "Alliance for Clinical Trials in Oncology",
+      sponsor_clean = "Alliance for Clinical Trials in Oncology",
+      sponsor_type = "Cooperative group / network"
+    ),
+    list(
+      input = "Medical Research Council",
+      sponsor_clean = "Medical Research Council",
+      sponsor_type = "Research institute / foundation"
+    ),
+    list(
+      input = "M.D. Anderson Cancer Center",
+      sponsor_clean = "MD Anderson Cancer Center",
+      sponsor_type = "Hospital / medical center"
+    ),
+    list(
+      input = "Jakob Kristian Jakobsen",
+      sponsor_clean = "Jakob Kristian Jakobsen",
+      sponsor_type = "Individual"
+    )
+  ), auto_unbox = TRUE)
+
+  batches <- chunk_vec(sponsors, batch_size)
+
+  results <- vector("list", length(sponsors))
+  names(results) <- seq_along(sponsors)
+  idx_offset <- 0L
+
+  for (b in batches) {
+    idxs <- seq_along(b) + idx_offset
+    idx_offset <- idx_offset + length(b)
+
+    user_payload <- list(
+      inputs = unname(as.character(b)),
+      note = "Return STRICT JSON only; no prose."
+    )
+
+    req <- request("https://api.openai.com/v1/chat/completions") |>
+      req_headers(
+        Authorization = paste("Bearer", api_key),
+        `Content-Type` = "application/json"
+      ) |>
+      req_body_json(list(
+        model = model,
+        temperature = temperature,
+        messages = list(
+          list(role = "system", content = system_prompt),
+          list(role = "user", content = fewshot_user),
+          list(role = "assistant", content = fewshot_assistant),
+          list(
+            role = "user",
+            content = paste0(
+              "Normalize these sponsors (STRICT JSON array only):\n",
+              toJSON(user_payload, auto_unbox = TRUE)
+            )
+          )
+        )
+      ))
+
+    resp <- req_perform(req)
+    txt  <- resp_body_string(resp)
+
+    # strip any stray code fences if model misbehaves
+    txt_clean <- str_replace_all(
+      txt,
+      "^\\s*```(json)?\\s*|\\s*```\\s*$",
+      ""
+    )
+
+    parsed <- tryCatch(
+      jsonlite::fromJSON(txt_clean, simplifyVector = FALSE),
+      error = function(e) NULL
+    )
+
+    # handle normal chat envelope
+    if (!is.null(parsed) && !is.null(parsed$choices)) {
+      content <- parsed$choices[[1]]$message$content
+      content <- str_replace_all(
+        content,
+        "^\\s*```(json)?\\s*|\\s*```\\s*$",
+        ""
+      )
+      parsed <- tryCatch(
+        jsonlite::fromJSON(content, simplifyVector = FALSE),
+        error = function(e) NULL
+      )
+    }
+
+    if (is.null(parsed) || !is.list(parsed)) {
+      stop("LLM did not return valid JSON. Raw text:\n", txt)
+    }
+
+    for (j in seq_along(parsed)) {
+      item <- parsed[[j]]
+
+      sponsor_clean <- as.character(item$sponsor_clean %||% NA)
+      sponsor_type  <- as.character(item$sponsor_type %||% NA)
+
+      # Guardrails: enforce sponsor_type ∈ allowed_types
+      if (!(sponsor_type %in% allowed_types)) {
+        sponsor_type <- "Other / unknown"
+      }
+
+      i_global <- idxs[j]
+      results[[as.character(i_global)]] <- list(
+        Sponsor_raw   = as.character(sponsors[i_global] %||% NA),
+        Sponsor_clean = sponsor_clean %||% as.character(sponsors[i_global] %||% NA),
+        Sponsor_type  = sponsor_type
+      )
+    }
+  }
+
+  tibble(
+    Sponsor_raw   = map_chr(results, ~ .x$Sponsor_raw),
+    Sponsor_clean = map_chr(results, ~ .x$Sponsor_clean),
+    Sponsor_type  = map_chr(results, ~ .x$Sponsor_type)
+  )
+}
+
 ```
 
 ```{r}
-ctg_clean <- read_csv("Data/ctg_clean.csv")
+sp_cleanMap <- llm_normalize_sponsors(ctg100$Sponsor)
+```
+
+```{r}
+ctg_clean <- read_csv("../Data/ctg_clean.csv")
 ```
 ```{r}
 glimpse(ctg_clean)
@@ -297,28 +518,30 @@ glimpse(ctg_clean)
 ```{r}
 ctg_clean <- ctg_clean %>%
   mutate(
-    # keep only the first 7 characters if date has a day (YYYY-MM-DD → YYYY-MM)
+    # --- Start date cleaning ---
     Start_Date_clean = str_sub(`Start Date`, 1, 7),
-
-    # if format is just YYYY, append "-01" to make YYYY-01
     Start_Date_clean = if_else(
       str_detect(Start_Date_clean, "^\\d{4}$"),
       paste0(Start_Date_clean, "-01"),
       Start_Date_clean
     ),
+    Start_Date_clean = ym(Start_Date_clean),
 
-    # convert to proper Date type (first day of the month)
-    Start_Date_clean = ym(Start_Date_clean)
-  ) %>%
-   mutate(
+    # --- Intervention type cleaning ---
     Intervention_clean = Interventions %>%
-      # extract all uppercase words before colon (like DRUG, RADIATION, etc.)
       str_extract_all("\\b[A-Z]+(?=:)") %>%
-      # flatten and remove duplicates within each row
       lapply(unique) %>%
-      # collapse back into a single string, separated by |
-      sapply(function(x) paste(x, collapse = "|"))
+      sapply(\(x) paste(x, collapse = "|")),
+
+    # --- Condition cleaning tweak: Neoplasms → Other neoplasms ---
+    Condition_clean = str_replace(
+      Condition_clean,
+      "\\bNeoplasms\\b",
+      "Other neoplasms"
+    )
   )
+ctg_clean %>%
+  count(Condition_clean == "Other neoplasms")
 ```
 
 ```{r}

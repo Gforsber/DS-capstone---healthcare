@@ -3,5 +3,60 @@ title: "Visual"
 format: html
 editor: visual
 ---
+```{r}
+library(readr)
+library(dplyr)
+library(forcats)
+library(ggplot2)
+library(tidyr)
+library(stringr)
+library(tidyverse)
+library(ggrepel)
+library(scales)
+```
 
+```{r}
+ctg <- read_csv("../Data/ctg_clean.csv")
+gbd <- read_csv("../Data/cancer.csv")
+```
+```{r}
+trials_summary <- ctg_clean %>%
+  count(Condition_clean, name = "trial_count")
+
+gbd_summary <- gbd %>%
+  filter(sex == "Both", age == "Age-standardized", metric == "Rate", location == "Global") %>%
+  group_by(cause) %>%
+  filter(year == max(year)) %>%
+  summarize(death_rate = mean(val, na.rm = TRUE)) %>%
+  ungroup()
+
+compare_df <- trials_summary %>%
+  inner_join(gbd_summary, by = c("Condition_clean" = "cause")) %>%
+  mutate(
+    trials_share = trial_count / sum(trial_count),
+    death_share = death_rate / sum(death_rate),
+    ratio = trials_share / death_share,
+    gap = trials_share - death_share
+  )
+```
+
+```{r}
+ggplot(compare_df, aes(x = death_share, y = trials_share, label = Condition_clean)) +
+  geom_point(aes(size = trial_count, color = ratio > 1)) +
+  geom_abline(slope = 1, intercept = 0, linetype = "dashed", color = "gray40") +
+  geom_text_repel(max.overlaps = 12, size = 3) +
+  scale_x_log10(labels = percent_format()) +
+  scale_y_log10(labels = percent_format()) +
+  scale_color_manual(values = c("TRUE" = "#2E8B57", "FALSE" = "#E74C3C"),
+                     labels = c("Under-studied", "Over-studied")) +
+  labs(
+    title = "Clinical Trials vs. Global Death of Cancer",
+    subtitle = "Comparison by cancer type (log-scaled shares)",
+    x = "Burden Share (proportion of total disease rate)",
+    y = "Clinical Trial Share (proportion of total trials)",
+    color = "Research Attention"
+  ) +
+  theme_minimal(base_size = 13)
+
+```
 

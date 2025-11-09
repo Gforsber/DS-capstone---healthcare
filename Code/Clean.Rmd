@@ -504,7 +504,7 @@ llm_normalize_sponsors <- function(
 }
 
 ```
-
+### Apply
 ```{r}
 sp_cleanMap <- llm_normalize_sponsors(ctg100$Sponsor)
 ```
@@ -544,9 +544,8 @@ ctg_clean %>%
   count(Condition_clean == "Other neoplasms")
 ```
 
-```{r}
-write_csv(ctg_clean, "Data/ctg_clean.csv")
-```
+
+
 
 
 

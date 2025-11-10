@@ -3,6 +3,7 @@ title: "Visual"
 format: html
 editor: visual
 ---
+
 ```{r}
 library(readr)
 library(dplyr)
@@ -21,6 +22,7 @@ gbd <- read_csv("../Data/gbd_death.csv")
 glimpse(gbd)
 glimpse(ctg)
 ```
+
 ```{r}
 trial_by_cancer <- ctg %>%
   count(Condition_clean, name = "trial_count")
@@ -100,5 +102,81 @@ ggsave(
 )
 ```
 
+```{r}
+gbd_daly <- gbd %>%
+  filter(sex == "Both",
+         age == "All ages",
+         measure == "DALYs (Disability-Adjusted Life Years)",
+         metric == "Percent") %>%
+  group_by(cause) %>%
+  filter(year == max(year)) %>%
+  summarise(daly_percent = mean(val, na.rm = TRUE)) %>%
+  ungroup()
 
+# --- Clinical Trials: compute % share by cancer type ---
+trials_percent <- ctg %>%
+  count(Condition_clean, name = "trial_count") %>%
+  mutate(trial_percent = trial_count / sum(trial_count) * 100)
+
+# --- Merge ---
+compare_df2 <- trials_percent %>%
+  inner_join(gbd_daly, by = c("Condition_clean" = "cause")) %>%
+  mutate(
+    ratio = trial_percent / daly_percent,
+    gap = trial_percent - daly_percent
+  )
+```
+
+```{r}
+ggplot(compare_df2, aes(x = daly_percent, y = trial_percent, label = Condition_clean)) +
+  geom_point(aes(color = ratio), size = 3) +
+  geom_hline(yintercept = mean(compare_df$trial_percent), linetype = "dotted") +
+  geom_vline(xintercept = mean(compare_df$daly_percent), linetype = "dotted") +
+  geom_text_repel(max.overlaps = 12, size = 3) +
+  scale_color_viridis_c(option = "B", direction = -1) +
+  labs(
+    title = "Global Cancer Research vs. Burden Quadrant Map",
+    x = "DALY Share (%)",
+    y = "Trial Share (%)",
+    color = "Trials/DALY Ratio"
+  ) +
+  theme_minimal(base_size = 13)
+
+
+
+
+
+```
+```{r}
+library(ineq)
+Lc_data <- Lc(compare_df2$trial_percent, compare_df$daly_percent)
+plot(Lc_data, main = "Inequality in Research vs. Burden Across Cancer Types",
+     col = "#2E86AB", lwd = 2)
+abline(0, 1, lty = 2, col = "gray50")
+
+
+```
+```{r}
+
+p3 <- ctg %>%
+  count(Sponsor_type, name = "n_trials") %>%
+  arrange(desc(n_trials)) %>%
+  ggplot(aes(x = reorder(Sponsor_type, n_trials), y = n_trials)) +
+  geom_col() +
+  coord_flip() +
+  labs(
+    title = "Number of Clinical Trials by Sponsor Type",
+    x = "Sponsor Type",
+    y = "Number of Trials"
+  ) +
+  theme_minimal(base_size = 13)
+
+ggsave(
+  filename = "../Result/Number of Clinical Trials by Sponsor Type.png",
+  plot = p3,
+  width = 8,
+  height = 5,
+  dpi = 300
+)
+```
 

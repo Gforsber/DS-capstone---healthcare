@@ -1,5 +1,8 @@
 # Global Cancer Research vs. Disease Burden
 
+#### Group Member: Gregory Forsberg, Khaleesi Chen, Xiaofan Liu
+
+
 **Repository Overview**  
 This project analyzes the misalignment between global cancer research activity (clinical trials) and disease burden (measured in DALYs from the Global Burden of Disease dataset).
 

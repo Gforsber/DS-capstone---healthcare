@@ -35,6 +35,15 @@ This project analyzes the misalignment between global cancer research activity (
 ├── Data/
 │   ├── ctg_clean.csv
 │   ├── gbd_death.csv
+
+├── Result/
+│   ├── Clinical Trial Share vs. Death Share by Cancer Type.png 
+
+# This graph shows the average global age-standardized death rates caused by different cancer types. Each rectangle represents one cancer; its size and color intensity reflects how high the average death rate is.
+
+│   ├── Number of Clinical Trials by Sponsor Type.png
+│   ├── Global Mortality Rates Map.png
+│   ├── Average Death Rate by Cause.png
 └── README.md                              # This file
 
 ````

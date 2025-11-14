@@ -1,0 +1,182 @@
+---
+title: "Visual"
+format: html
+editor: visual
+---
+
+```{r}
+library(readr)
+library(dplyr)
+library(forcats)
+library(ggplot2)
+library(tidyr)
+library(stringr)
+library(tidyverse)
+library(ggrepel)
+library(scales)
+```
+
+```{r}
+ctg <- read_csv("../Data/ctg_clean.csv")
+gbd <- read_csv("../Data/gbd_death.csv")
+glimpse(gbd)
+glimpse(ctg)
+```
+
+```{r}
+trial_by_cancer <- ctg %>%
+  count(Condition_clean, name = "trial_count")
+
+# 2) Use total death *numbers* (not rates) from GBD
+gbd_latest <- gbd %>%
+  filter(
+    location == "Global",
+    sex == "Both",
+    metric == "Number",     
+    measure == "Deaths",
+    year == max(year)
+  ) %>%
+  select(cause, death_number = val)
+
+# 3) Join + compute shares and ratio
+compare_df <- trial_by_cancer %>%
+  inner_join(gbd_latest, by = c("Condition_clean" = "cause")) %>%
+  mutate(
+    total_trials      = sum(trial_count, na.rm = TRUE),
+    total_deaths      = sum(death_number, na.rm = TRUE),
+    trials_share      = trial_count / total_trials,
+    death_share       = death_number / total_deaths,
+    ratio             = trials_share / death_share,
+    status            = if_else(ratio < 1, "Under-studied", "Over-studied")
+  )
+
+```
+
+```{r}
+p1 <- ggplot(compare_df, aes(x = death_share, y = trials_share, label = Condition_clean)) +
+  geom_point(aes(size = trial_count, color = status), alpha = 0.85) +
+  geom_abline(slope = 1, intercept = 0, linetype = "dashed", color = "gray40") +
+  geom_text_repel(max.overlaps = 12, size = 3) +
+  scale_x_log10(labels = percent_format(accuracy = 0.01)) +
+  scale_y_log10(labels = percent_format(accuracy = 0.01)) +
+  scale_color_manual(
+    values = c("Under-studied" = "#E74C3C", "Over-studied" = "#2E8B57"),
+    name = "Research Attention"
+  ) +
+  scale_size_continuous(name = "Trial count") +
+  labs(
+    title = "Clinical Trial Share vs. Death Share by Cancer Type",
+    subtitle = "Using global number of deaths (GBD)  — log-scaled shares",
+    x = "Death share (proportion of total cancer deaths)",
+    y = "Trial share (proportion of total cancer trials)"
+  ) +
+  theme_minimal(base_size = 13)
+
+```
+
+```{r}
+library(lubridate)
+
+p2 <- ctg %>%
+  mutate(Year = year(ym(str_sub(`Start Date`, 1, 7)))) %>%
+  count(Year) %>%
+  ggplot(aes(x = Year, y = n)) +
+  geom_line(color = "#E69F00", linewidth = 1) +
+  scale_x_continuous(
+    limits = c(1970, 2025),        # 👈 force scale to end at 2025
+    breaks = seq(1970, 2025, by = 5)
+  ) +
+  labs(
+    title = "Growth of Cancer Clinical Trials (1970–2025)",
+    x = "Year of trial start",
+    y = "Number of new trials"
+  ) +
+  theme_minimal(base_size = 13)
+
+ggsave(
+  filename = "../Result/growth_of_cancer_trials_1970_2025.png",
+  plot = p2,
+  width = 8,
+  height = 5,
+  dpi = 300
+)
+```
+
+```{r}
+gbd_daly <- gbd %>%
+  filter(sex == "Both",
+         age == "All ages",
+         measure == "DALYs (Disability-Adjusted Life Years)",
+         metric == "Percent") %>%
+  group_by(cause) %>%
+  filter(year == max(year)) %>%
+  summarise(daly_percent = mean(val, na.rm = TRUE)) %>%
+  ungroup()
+
+# --- Clinical Trials: compute % share by cancer type ---
+trials_percent <- ctg %>%
+  count(Condition_clean, name = "trial_count") %>%
+  mutate(trial_percent = trial_count / sum(trial_count) * 100)
+
+# --- Merge ---
+compare_df2 <- trials_percent %>%
+  inner_join(gbd_daly, by = c("Condition_clean" = "cause")) %>%
+  mutate(
+    ratio = trial_percent / daly_percent,
+    gap = trial_percent - daly_percent
+  )
+```
+
+```{r}
+ggplot(compare_df2, aes(x = daly_percent, y = trial_percent, label = Condition_clean)) +
+  geom_point(aes(color = ratio), size = 3) +
+  geom_hline(yintercept = mean(compare_df$trial_percent), linetype = "dotted") +
+  geom_vline(xintercept = mean(compare_df$daly_percent), linetype = "dotted") +
+  geom_text_repel(max.overlaps = 12, size = 3) +
+  scale_color_viridis_c(option = "B", direction = -1) +
+  labs(
+    title = "Global Cancer Research vs. Burden Quadrant Map",
+    x = "DALY Share (%)",
+    y = "Trial Share (%)",
+    color = "Trials/DALY Ratio"
+  ) +
+  theme_minimal(base_size = 13)
+
+
+
+
+
+```
+```{r}
+library(ineq)
+Lc_data <- Lc(compare_df2$trial_percent, compare_df$daly_percent)
+plot(Lc_data, main = "Inequality in Research vs. Burden Across Cancer Types",
+     col = "#2E86AB", lwd = 2)
+abline(0, 1, lty = 2, col = "gray50")
+
+
+```
+```{r}
+
+p3 <- ctg %>%
+  count(Sponsor_type, name = "n_trials") %>%
+  arrange(desc(n_trials)) %>%
+  ggplot(aes(x = reorder(Sponsor_type, n_trials), y = n_trials)) +
+  geom_col() +
+  coord_flip() +
+  labs(
+    title = "Number of Clinical Trials by Sponsor Type",
+    x = "Sponsor Type",
+    y = "Number of Trials"
+  ) +
+  theme_minimal(base_size = 13)
+
+ggsave(
+  filename = "../Result/Number of Clinical Trials by Sponsor Type.png",
+  plot = p3,
+  width = 8,
+  height = 5,
+  dpi = 300
+)
+```
+

@@ -365,8 +365,8 @@ the Global Burden of Disease dataset).</p>
 <div id="table-of-contents" class="section level2">
 <h2>Table of Contents</h2>
 <ol style="list-style-type: decimal">
-<li><a href="#project-description">Project Description</a><br />
-</li>
+<li><a href="#project-description">Project Description</a></li>
+<li><a href="#Motivation">Motivation</a></li>
 <li><a href="#folder-structure">Folder Structure</a><br />
 </li>
 <li><a href="#data-sources">Data Sources</a><br />
@@ -375,8 +375,51 @@ the Global Burden of Disease dataset).</p>
 </ol>
 <hr />
 </div>
+<div id="motivation" class="section level2">
+<h2>Motivation</h2>
+<p>Cancer imposes a substantial and growing global health burden. In
+2022, there were <strong>20 million new cancer cases</strong> and
+<strong>9.7 million deaths</strong>, with lifetime risk reaching
+<strong>1 in 5 people</strong> worldwide. Projections indicate that by
+<strong>2050</strong>, annual incidence will rise to <strong>35 million
+cases</strong>.</p>
+<p>Despite this scale, access to diagnosis and treatment remains highly
+uneven: for example, women in low-HDI countries are <strong>50% less
+likely</strong> to be diagnosed with breast cancer than those in
+high-HDI regions. These disparities raise a critical question for global
+health research:</p>
+<p><strong>Does clinical trial activity align with global cancer
+burden?</strong></p>
+<p>Because clinical trials drive therapeutic innovation, mismatches
+between research focus and disease burden may exacerbate existing
+inequities. This project systematically compares <strong>clinical trial
+distribution</strong> with ** DALY-based global cancer burden** across
+35 cancer types to evaluate the extent of alignment—and identify areas
+of underinvestment.</p>
+<hr />
+</div>
 <div id="project-description" class="section level2">
 <h2>Project Description</h2>
+<p>This project examines the alignment between global clinical trial
+activity and the global burden of cancer. Using data from
+ClinicalTrials.gov and the Global Burden of Disease (GBD) study, the
+analysis harmonizes over 12,000 cancer clinical trials and 20,000
+disease burden records across 35 standardized cancer types.</p>
+<p>A key component of the workflow is the use of a Large Language Model
+(GPT-4) to normalize heterogeneous clinical trial condition labels into
+a consistent ontology, enabling accurate comparison across datasets.
+Trial activity is quantified by each cancer type’s share of global
+trials, while disease burden is measured using DALY percent from
+GBD.</p>
+<p>Through integrated visual and statistical analysis, the project
+identifies cancers that are over-represented in research relative to
+their global burden (e.g., breast and prostate cancer) and those that
+appear under-studied despite high morbidity and mortality (e.g., liver,
+cervical, and esophageal cancers). Additional analyses explore patterns
+in trial sponsors, intervention types, and temporal trends.</p>
+<p>Overall, this work provides a reproducible framework for evaluating
+research equity, highlighting gaps in global cancer innovation and
+informing priorities for future clinical research efforts.</p>
 <hr />
 </div>
 <div id="folder-structure" class="section level2">

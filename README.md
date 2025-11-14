@@ -10,16 +10,40 @@ This project analyzes the misalignment between global cancer research activity (
 
 ## Table of Contents
 
-1. [Project Description](#project-description)  
-2. [Folder Structure](#folder-structure)  
-3. [Data Sources](#data-sources)  
-4. [Dependencies](#dependencies)  
-  
+1. [Project Description](#project-description) 
+2. [Motivation](#Motivation) 
+3. [Folder Structure](#folder-structure)  
+4. [Data Sources](#data-sources)  
+5. [Dependencies](#dependencies)  
+
+---
+
+## Motivation
+
+
+Cancer imposes a substantial and growing global health burden. In 2022, there were **20 million new cancer cases** and **9.7 million deaths**, with lifetime risk reaching **1 in 5 people** worldwide. Projections indicate that by **2050**, annual incidence will rise to **35 million cases**.
+
+Despite this scale, access to diagnosis and treatment remains highly uneven: for example, women in low-HDI countries are **50% less likely** to be diagnosed with breast cancer than those in high-HDI regions. These disparities raise a critical question for global health research:
+
+ **Does clinical trial activity align with global cancer burden?**
+
+Because clinical trials drive therapeutic innovation, mismatches between research focus and disease burden may exacerbate existing inequities. This project systematically compares **clinical trial distribution** with ** DALY-based global cancer burden** across 35 cancer types to evaluate the extent of alignment—and identify areas of underinvestment.
+
+
+
+
 
 ---
 
 ## Project Description
 
+This project examines the alignment between global clinical trial activity and the global burden of cancer. Using data from ClinicalTrials.gov and the Global Burden of Disease (GBD) study, the analysis harmonizes over 12,000 cancer clinical trials and 20,000 disease burden records across 35 standardized cancer types.
+
+A key component of the workflow is the use of a Large Language Model (GPT-4) to normalize heterogeneous clinical trial condition labels into a consistent ontology, enabling accurate comparison across datasets. Trial activity is quantified by each cancer type’s share of global trials, while disease burden is measured using DALY percent from GBD.
+
+Through integrated visual and statistical analysis, the project identifies cancers that are over-represented in research relative to their global burden (e.g., breast and prostate cancer) and those that appear under-studied despite high morbidity and mortality (e.g., liver, cervical, and esophageal cancers). Additional analyses explore patterns in trial sponsors, intervention types, and temporal trends.
+
+Overall, this work provides a reproducible framework for evaluating research equity, highlighting gaps in global cancer innovation and informing priorities for future clinical research efforts.
 
 
 ---

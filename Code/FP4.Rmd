@@ -32,7 +32,6 @@ library(ineq)
 ```{r}
 totalcancer <- read_csv("../Data/IHME-GBD_2021_DATA-eae6be09-1.csv")
 clean_scrape_data <- read.csv("../Data/ctg_clean.csv")
-IHME_data <- read_csv("../Data/IHME2/IHME_data.csv")
 world <- ne_countries(scale = "medium", returnclass = "sf")
 cancerdaly <- read_csv("../Data/IHME-GBD_2021_DATA-12473b24-1.csv")
 ```
@@ -205,6 +204,207 @@ p2
 
 #Scarlett
 ```{r}
+#data
+IHME_data <- read_csv("../Data/IHME_data.csv")
+world <- ne_countries(scale = "medium", returnclass = "sf")
+
 
 ```
+
+```{r}
+IHME_data <- IHME_data %>%
+  mutate(location = recode(location,
+    "Viet Nam"                               = "Vietnam",
+    "Venezuela(Bolivarian Republic of)"      = "Venezuela",
+    "Syrian Arab Republic"                   = "Syria",
+    "Republic of Korea"   = "South Korea",
+    "Democratic People's Republic of Korea"  = "North Korea",
+    "Russian Federation"                     = "Russia",
+    "Taiwan(Province of China)"              = "Taiwan",
+    "United Republic of Tanzania"            = "Tanzania",
+    "Lao People's Democratic Republic"       = "Laos",
+    "Iran (Islamic Republic of)"             = "Iran",
+    "Republic of Moldova"                    = "Moldova",
+    "Eswatini"                               = "Swaziland",
+    "Bolivia (Plurinational State of)"       = "Bolivia",
+    "Democratic Republic of the Congo" = "Congo (Kinshasa)",
+    "Republic of the Congo" = "Congo (Brazzaville)",
+    "Micronesia (Federated States of)"   = "Micronesia",
+    "Marshall Islands"                   = "Marshall Is.",
+    "Northern Mariana Islands"           = "N. Mariana Is.",
+    "United States Virgin Islands"       = "U.S. Virgin Is.",
+    "Antigua and Barbuda"                = "Antigua",
+    "Saint Kitts and Nevis"              = "Saint Kitts",
+    "Dominican Republic"                 = "Dominican Rep.",
+    "Sao Tome and Principe"              = "Sao Tome & Principe",
+    "Saint Vincent and the Grenadines"   = "Saint Vincent",
+    "Cook Islands"                       = "Cook Is.",
+    "Solomon Islands"                    = "Solomon Is.",
+    "Equatorial Guinea"                  = "Eq. Guinea",
+    "Bosnia and Herzegovina"             = "Bosnia",
+    "Brunei Darussalam"                  = "Brunei",
+    "South Sudan"                        = "S. Sudan",
+    "Central African Republic"           = "Central African Rep.",
+    "Tokelau"                            = "Tokelau"   # may not exist in world map
+
+  ))
+
+```
+
+
+```{r, eval=FALSE}
+top4<- IHME_data%>%
+  group_by(cause)%>%
+  summarise(val = mean(val))%>%
+  arrange(desc(val))
+```
+
+**Visualization**
+```{r}
+world <- ne_countries(returnclass = "sf")
+
+focus_cause <- "Stomach cancer"
+
+focus_cause2 <- "Tracheal, bronchus, and lung cancer"
+
+focus_cause3 <- "Breast cancer"
+
+focus_cause4 <- "Colon and rectum cancer"
+
+ihme_map_stomach <- IHME_data %>%
+  filter(cause == focus_cause, 
+         measure == "Deaths", 
+         metric == "Rate") %>%
+  group_by(location) %>%
+  summarise(val = mean(val, na.rm = TRUE), .groups="drop")
+
+
+mapdata <- world %>%
+  left_join(ihme_map_stomach, by = c("name" = "location"))
+
+Liver_cancer <- ggplot(mapdata) +
+  geom_sf(aes(fill = val), color = "white", size = 0.2) +
+  labs(caption = "Age-standardized death rate for Stomach cancer",
+       fill = "Rate per 100k") +
+  theme_classic()+
+  theme(
+    plot.caption = element_text(hjust = 0.5, size = 14),  
+    plot.caption.position = "plot")+
+  scale_fill_stepsn(
+  colours = c("#1a9850", "#fee08b", "#d73039"),
+  breaks = c(5, 10, 15, 20, 30, 40, 60), 
+  na.value = "grey90",
+  name = "Rate per 100k"
+)
+
+```
+
+
+
+
+
+```{r}
+ihme_map_lung <- IHME_data %>%
+  filter(cause == focus_cause2, 
+         measure == "Deaths", 
+         metric == "Rate") %>%
+  group_by(location) %>%
+  summarise(val = mean(val, na.rm = TRUE), .groups="drop")
+
+
+mapdata2 <- world %>%
+  left_join(ihme_map_lung, by = c("name" = "location"))
+
+Lung_cancer <- ggplot(mapdata2) +
+  geom_sf(aes(fill = val), color = "white", size = 0.2) +
+  labs(caption = "Age-standardized death rate for Tracheal, bronchus, and Lung cancer",
+       fill = "Rate per 100k") +
+  theme_classic()+
+  theme(
+    plot.caption = element_text(hjust = 0.5, size = 14),  
+    plot.caption.position = "plot")+
+  scale_fill_stepsn(
+  colours = c("#1a9850", "#fee08b", "#d73039"),
+  breaks = c(5, 10, 15, 20, 30, 40, 60), 
+  na.value = "grey90",
+  name = "Rate per 100k"
+)
+```
+
+```{r}
+ihme_map_breast <- IHME_data %>%
+  filter(cause == focus_cause3, 
+         measure == "Deaths", 
+         metric == "Rate") %>%
+  group_by(location) %>%
+  summarise(val = mean(val, na.rm = TRUE), .groups="drop")
+
+
+mapdata3 <- world %>%
+  left_join(ihme_map_breast, by = c("name" = "location"))
+
+Breast_cancer <- ggplot(mapdata3) +
+  geom_sf(aes(fill = val), color = "white", size = 0.2) +
+  labs(caption = "Age-standardized death rate for Breast cancer",
+       fill = "Rate per 100k") +
+  theme_classic()+
+  theme(
+    plot.caption = element_text(hjust = 0.5, size = 14),  
+    plot.caption.position = "plot")+
+  scale_fill_stepsn(
+  colours = c("#1a9850", "#fee08b", "#d73039"),
+  breaks = c(5, 10, 15, 20, 30, 40, 60), 
+  na.value = "grey90",
+  name = "Rate per 100k"
+)
+```
+
+```{r}
+ihme_map_colon <- IHME_data %>%
+  filter(cause == focus_cause4, 
+         measure == "Deaths", 
+         metric == "Rate") %>%
+  group_by(location) %>%
+  summarise(val = mean(val, na.rm = TRUE), .groups="drop")
+
+
+mapdata4 <- world %>%
+  left_join(ihme_map_colon, by = c("name" = "location"))
+
+Colon_cancer <- ggplot(mapdata4) +
+  geom_sf(aes(fill = val), color = "white", size = 0.2) +
+  labs(caption = "Age-standardized death rate for Colon and Rectum cancer",
+       fill = "Rate per 100k") +
+  theme_classic() +
+  theme(
+    plot.caption = element_text(hjust = 0.5, size = 14),  
+    plot.caption.position = "plot")+
+  scale_fill_stepsn(
+  colours = c("#1a9850", "#fee08b", "#d73039"),
+  breaks = c(5, 10, 15, 20, 30, 40, 60), 
+  na.value = "grey90",
+  name = "Rate per 100k"
+)
+```
+
+**Final Visual**
+```{r fig.alt="Four world maps showing age-standardized cancer mortality rates for stomach, lung, colorectal, and breast cancer. Data from the Global Burden of Disease study.", fig.width=13, fig.height=8}
+combined <- ggarrange(Liver_cancer, 
+                              Lung_cancer, 
+                              Colon_cancer, 
+                              Breast_cancer, 
+                              ncol = 2, nrow = 2, 
+                              widths = c(2, 2),     
+                              heights = c(2, 2)
+                              )
+
+final_cancer_map <- annotate_figure(
+  combined,
+  top = text_grob("Global Age-standardized Cancer Mortality Rates", 
+                  size = 18, hjust = 0.5)
+)
+
+final_cancer_map
+```
+
 

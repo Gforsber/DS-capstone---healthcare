@@ -1,0 +1,79 @@
+---
+title: "FP2-Gregory"
+author: "Gregory Forsberg"
+date: "2025-09-24"
+output: html_document
+---
+
+#load packages
+```{r}
+library(readr)
+library(dplyr)
+library(ggplot2)
+library(forcats)
+library(scales)
+library(treemapify)
+```
+
+#load data
+```{r}
+totalcancer <- read_csv("Data/IHMEtotalcancer/IHME-GBD_2021_DATA-eae6be09-1.csv")
+```
+
+#Data and Viz
+```{r fig.alt="Your alt text"}
+total_by_year <- totalcancer %>%
+  filter(metric == "Number", measure == "Deaths") %>%  
+  group_by(year, cause) %>%
+  summarise(total = sum(val, na.rm = TRUE), .groups = "drop")
+
+top_causes <- total_by_year %>%
+  group_by(cause) %>%
+  summarise(overall_total = sum(total, na.rm = TRUE), .groups = "drop") %>%
+  slice_max(overall_total, n = 10) %>%   
+  pull(cause)
+
+top_cancers_only <- total_by_year %>%
+  filter(cause %in% top_causes)
+
+breastc_deaths <- totalcancer %>% 
+  filter(cause == "Breast cancer")
+
+ggplot(breastc_deaths, aes(x = year, y = val))+
+  geom_line(size = 1, colour = "pink")
+
+ggplot(top_cancers_only, aes(x = year, y = total, color = cause)) +
+  geom_line(size = 1) +
+  labs(title = "Cancer Types by Total Deaths Over Time (Top 10)",
+       x = "Year", y = "Total Deaths", color = "Cancer Type") +
+    scale_y_continuous(labels = comma) +
+  theme_minimal()
+```
+
+```{r}
+scrape_data <- read.csv("Data/ctg-studies.csv")
+clean_scrape_data <- read.csv("Data/ctg_clean.csv")
+ctg_clean <- read.csv("Data/ctg_clean.csv")
+
+scrape_data %>% 
+  group_by(Phases) %>% 
+  summarize(count = n())
+
+scrape_data
+
+ct_count <- clean_scrape_data %>% 
+  group_by(Condition_clean) %>% 
+  summarize(count = n()) %>% 
+  arrange(desc(count)) %>% 
+  slice_head(n = 10)
+
+ct_count
+
+  ggplot(ct_count,aes(reorder(Condition_clean, count), count))+
+  geom_col()+
+  theme_minimal()+
+  labs(x = "Clinical trial targeted Condition")+
+  theme(axis.text.x = element_text(angle = 45, hjust = 1, size = 6)) 
+  
+```
+

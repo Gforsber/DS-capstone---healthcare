@@ -179,6 +179,10 @@ p1 <- ggplot(compare_df, aes(x = death_share, y = trials_share, label = Conditio
   theme_minimal(base_size = 13)
 p1
 ```
+
+- This graph compares how many clinical trials each cancer type receives (y-axis) with how much global mortality it causes (x-axis). Both axes use log scales. The dashed diagonal line represents a 1:1 ratio, where a cancer gets research attention proportional to its death burden. The Green points represent the well-studied or over-studied cancers, which are those with more trials than expected relative to how many people they kill. Red points represent under-studied cancers, which are those with fewer trials than expected given their mortality burden. Point size shows the number of trials (larger = more trials).
+
+
 ```{r}
 library(lubridate)
 
@@ -201,6 +205,7 @@ p2 <- ctg %>%
 p2
 ```
 
+- This graph shows how the number of new cancer clinical trials has grown over time. From 1970 to the early 1990s, very few trials were launched each year. Starting in the mid-1990s, trial activity increased sharply, and by the 2000s the growth became exponential. Today, we see more than 600 new cancer trials being initiated each year.
 
 #Scarlett
 ```{r}
@@ -298,9 +303,6 @@ Liver_cancer <- ggplot(mapdata) +
 )
 
 ```
-
-
-
 
 
 ```{r}
@@ -406,5 +408,10 @@ final_cancer_map <- annotate_figure(
 
 final_cancer_map
 ```
+
+ 
+- This visualization shows global patterns in age-standardized cancer mortality rates for the top four cancer types: stomach, lung, colorectal, and breast cancer. The data come from the Global Burden of Disease (GBD) study conducted by the Institute for Health Metrics and Evaluation (IHME). Each panel presents a world map shaded by deaths per 100,000 people. The color scale is consistent across all panels: green represents relatively lower mortality, while orange and red indicate relatively higher mortality. Some territories appear in grey, reflecting areas where GBD does not provide data.  
+
+- Some key finding are that lung cancer mortality is especially high in Eastern Europe and East Asia, regions which might relate to smoking rates and air pollution. In contrast, breast cancer mortality is relatively low in wealthier countries with strong screening and treatment programs, but higher in parts of sub-Saharan Africa where access to health care is more limited. 
 
 

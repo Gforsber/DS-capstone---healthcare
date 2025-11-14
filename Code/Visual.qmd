@@ -17,8 +17,8 @@ library(scales)
 ```
 
 ```{r}
-ctg <- read_csv("../Data/ctg_clean.csv")
-gbd <- read_csv("../Data/gbd_death.csv")
+ctg <- read.csv("../Data/ctg_clean.csv")
+gbd <- read.csv("../Data/gbd_death.csv")
 glimpse(gbd)
 glimpse(ctg)
 ```
@@ -147,6 +147,7 @@ ggplot(compare_df2, aes(x = daly_percent, y = trial_percent, label = Condition_c
 
 
 ```
+
 ```{r}
 library(ineq)
 Lc_data <- Lc(compare_df2$trial_percent, compare_df$daly_percent)
@@ -156,6 +157,7 @@ abline(0, 1, lty = 2, col = "gray50")
 
 
 ```
+
 ```{r}
 
 p3 <- ctg %>%
@@ -179,4 +181,3 @@ ggsave(
   dpi = 300
 )
 ```
-

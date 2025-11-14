@@ -1,0 +1,137 @@
+---
+title: "FP4"
+author: "Gregory Forsberg"
+date: "2025-11-14"
+output: html_document
+---
+
+#loading packages
+```{r}
+library(readr)
+library(dplyr)
+library(tidyr)
+library(stringr)
+library(tidyverse)
+library(lubridate)
+library(ggplot2)
+library(ggrepel)
+library(scales)
+library(treemapify)
+library(ggpubr)
+library(forcats)
+library(sf)
+library(countrycode)
+library(rnaturalearth)
+library(rnaturalearthdata)
+library(ineq)
+```
+
+#loading in data
+- ClinicalTrials.gov — Global Interventional Cancer Trials: Central repository for interventional and observational trials; includes study design, enrollment, and outcomes
+- IHME Global Burden of Disease (GBD) — Global Cancer DALYs: Provides global epidemiological data on mortality, morbidity, and risk factors across countries and disease categories
+```{r}
+totalcancer <- read_csv("../Data/IHME-GBD_2021_DATA-eae6be09-1.csv")
+clean_scrape_data <- read.csv("../Data/ctg_clean.csv")
+IHME_data <- read_csv("../Data/IHME2/IHME_data.csv")
+world <- ne_countries(scale = "medium", returnclass = "sf")
+cancerdaly <- read_csv("../Data/IHME-GBD_2021_DATA-12473b24-1.csv")
+```
+#Gregory
+```{r}
+total_by_year <- totalcancer %>%
+  filter(metric == "Number", measure == "Deaths") %>%  
+  group_by(year, cause) %>%
+  summarise(total = sum(val, na.rm = TRUE), .groups = "drop")
+
+top_causes <- total_by_year %>%
+  group_by(cause) %>%
+  summarise(overall_total = sum(total, na.rm = TRUE), .groups = "drop") %>%
+  slice_max(overall_total, n = 10) %>%   
+  pull(cause)
+
+top_cancers_only <- total_by_year %>%
+  filter(cause %in% top_causes)
+
+ggplot(top_cancers_only, aes(x = year, y = total, color = cause)) +
+  geom_line(size = 1) +
+  labs(title = "Cancer Types by Total Deaths Over Time (Top 10)",
+       x = "Year", y = "Total Deaths", color = "Cancer Type") +
+    scale_y_continuous(labels = comma) +
+  theme_minimal()
+
+ct_count <- clean_scrape_data %>% 
+  group_by(Condition_clean) %>% 
+  summarize(count = n()) %>% 
+  arrange(desc(count)) %>% 
+  slice_head(n = 10)
+
+ggplot(ct_count,aes(reorder(Condition_clean, count), count))+
+  geom_col()+
+  theme_minimal()+
+  labs(x = "Clinical trial targeted Condition")+
+  theme(axis.text.x = element_text(angle = 45, hjust = 1, size = 6)) 
+
+latest_year <- max(totalcancer$year, na.rm = TRUE)
+
+global_latest <- totalcancer %>%
+  filter(location == "Global", metric == "Number", measure == "Deaths", age == "All ages", sex == "Both", year == latest_year) %>%
+  group_by(cause) %>%
+  summarise(total_deaths = sum(val, na.rm = TRUE), .groups = "drop") %>%
+  arrange(desc(total_deaths)) %>%
+  slice_head(n = 15)
+
+ggplot(global_latest, aes(x = reorder(cause, total_deaths), y = total_deaths)) +
+  geom_col(fill = "blue") +
+  coord_flip() +
+  labs(title = paste("Top 15 Global Cancer Deaths in", latest_year), x = "Cancer Type", y = "Total Deaths") +
+  theme_minimal()
+
+global_trend <- totalcancer %>%
+  filter(location == "Global", metric == "Number", measure == "Deaths", age == "All ages", sex == "Both") %>%
+  group_by(year) %>%
+  summarise(total_deaths = sum(val, na.rm = TRUE), .groups = "drop")
+
+ggplot(global_trend, aes(x = year, y = total_deaths)) +
+  geom_line(size = 1.2, color = "red") +
+  geom_point(color = "darkred") +
+  labs(title = "Total Global Cancer Deaths Over Time", x = "Year", y = "Total Deaths") +
+  theme_minimal()
+
+rate_dalys_trend <- cancerdaly %>%
+  filter(location_name == "America",
+         measure_name == "DALYs (Disability-Adjusted Life Years)",
+         metric_name == "Rate", #100,000?
+         sex_name == "Both",
+         age_name == "All ages",
+         cause_name != "Neoplasms") %>%
+  group_by(year) %>%
+  summarise(avg_daly_rate = mean(val, na.rm = TRUE), .groups = "drop")
+
+ggplot(rate_dalys_trend, aes(x = year, y = avg_daly_rate)) +
+  geom_line(color = "darkgreen", size = 1.2) +
+  geom_point(color = "green") +
+  labs(title = "Cancer DALY Rate per 100k (America)",
+       x = "Year", y = "DALYs per 100,000") +
+  theme_minimal()
+```
+1) This visualization shows the death rate (per 100,000) by cancer type from 1980 to 2021 for the top ten causes of cancer deaths. The x-axis displays the year, and the y-axis shows the total death counts, with each colored line representing the different cancer types. This visualization address one of our research questions being: How have global cancer death rates changed over time? Understanding these important trends help drive public health and policy efforts and future medical research in treating cancer.
+
+The highest death rate during this period is for tracheal, bronchus, and lung cancer which peaked in about the 1990s and has since slowly declined. This could be a result of a decrease in smoking among younger populations and/or advancement made in medicine to treat this type of cancer. Stomach cancer shows a significant and consistent decline, while most other cancer types remained stable or trend downward, though more gradually. These patterns reflect a variety of different factors such as medical advancements, changes in societal habits, and preventative care initiatives.
+
+2) Graph looks at the raw totals of clinical trials based off the types of neoplasm that they target.
+
+3) Graph looks at the global cancer death rates for top 15 cancer deaths in 2021.
+
+4) Graph looks at the total global cancer deaths over time from 2012 to 2021.
+
+5) Graph DALY rate per 100k from 2012 to 2021 within america for cancer.
+
+#Khalessi
+Has done a great amount of work on our llm to scrape the data from the clinical gov website. The code for the llm is in the code file titled "Clean.RMD". It isn't included in this rmd so that we don't re-run the llm. 
+
+
+#Scarlett
+```{r}
+
+```
+

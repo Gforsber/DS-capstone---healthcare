@@ -1,0 +1,341 @@
+measure,location,sex,age,cause,metric,year,val,upper,lower
+Deaths,Global,Both,All ages,Esophageal cancer,Number,2015,467148.3809043323,506901.394841187,428426.517489331
+Deaths,Global,Both,All ages,Stomach cancer,Number,2015,897155.7534246845,977076.9497638819,779279.1719331276
+Deaths,Global,Both,All ages,Liver cancer,Number,2015,440660.23837254767,471512.7251966713,412238.2520406903
+Deaths,Global,Both,All ages,Larynx cancer,Number,2015,106006.39225897736,111841.55597669829,100386.96082630055
+Deaths,Global,Both,All ages,"Tracheal, bronchus, and lung cancer",Number,2015,1783755.6129060972,1886263.1463472655,1670148.1680127173
+Deaths,Global,Both,All ages,Neuroblastoma and other peripheral nervous cell tumors,Number,2017,5017.810816483045,5623.483370328036,4192.9861743896745
+Deaths,Global,Both,All ages,Eye cancer,Number,2015,9970.931764008814,11604.006946518633,7865.079148920317
+Deaths,Global,Both,All ages,Soft tissue and other extraosseous sarcomas,Number,2015,45039.98085214794,54897.868040295376,39623.63120304736
+Deaths,Global,Both,All ages,Malignant neoplasm of bone and articular cartilage,Number,2015,59700.68498817089,65583.71672438885,47937.43259227435
+Deaths,Global,Both,All ages,Breast cancer,Number,2013,554840.229849956,578342.1829338392,523396.89311903017
+Deaths,Global,Both,All ages,Cervical cancer,Number,2013,258751.16614267463,275005.021613126,242248.53346730125
+Deaths,Global,Both,All ages,Uterine cancer,Number,2013,78971.21090564072,85364.49550943276,70631.86182954184
+Deaths,Global,Both,All ages,Prostate cancer,Number,2013,351242.3957010578,374589.5225284536,311829.8441628672
+Deaths,Global,Both,All ages,Colon and rectum cancer,Number,2013,871165.3179562066,911649.2662449303,812888.7815310244
+Deaths,Global,Both,All ages,Lip and oral cavity cancer,Number,2013,167105.22347828175,174406.48723835187,158509.26972501044
+Deaths,Global,Both,All ages,Nasopharynx cancer,Number,2013,64986.69356092831,69210.2037337918,60962.685176376086
+Deaths,Global,Both,All ages,Other pharynx cancer,Number,2013,76178.82798681903,80280.55293560142,71876.2063193539
+Deaths,Global,Both,All ages,Gallbladder and biliary tract cancer,Number,2013,142579.11716522515,159705.43757176035,120914.8671114115
+Deaths,Global,Both,All ages,Pancreatic cancer,Number,2013,399294.8901312913,417068.76030640205,373084.37092634186
+Deaths,Global,Both,All ages,Malignant skin melanoma,Number,2013,57091.86108956723,60425.0070937842,51791.51501247015
+Deaths,Global,Both,All ages,Non-melanoma skin cancer,Number,2013,46467.67226443977,50361.82689529213,40050.15568226214
+Deaths,Global,Both,All ages,Ovarian cancer,Number,2013,155645.3631424517,164848.73677503198,142377.90268318015
+Deaths,Global,Both,All ages,Testicular cancer,Number,2013,9604.930237212897,9942.667114459764,9268.377270478959
+Deaths,Global,Both,All ages,Kidney cancer,Number,2013,137197.32208994514,142369.61387420035,128943.65561140927
+Deaths,Global,Both,All ages,Bladder cancer,Number,2013,184512.48524943917,198892.13393677113,170602.06977696274
+Deaths,Global,Both,All ages,Brain and central nervous system cancer,Number,2013,220731.70152730707,249963.576370004,191827.71246957206
+Deaths,Global,Both,All ages,Thyroid cancer,Number,2013,37330.547329918045,39991.12544644969,33303.97625448327
+Deaths,Global,Both,All ages,Mesothelioma,Number,2013,27119.882537317626,28423.459587774905,25399.159220397487
+Deaths,Global,Both,All ages,Hodgkin lymphoma,Number,2013,27531.936437158893,35080.93763321137,21041.787435576458
+Deaths,Global,Both,All ages,Non-Hodgkin lymphoma,Number,2013,227685.98057477805,243864.79418807325,211494.5187244742
+Deaths,Global,Both,All ages,Multiple myeloma,Number,2013,92477.98120787083,100227.25170626996,83468.46200468151
+Deaths,Global,Both,All ages,Leukemia,Number,2013,296530.8776784823,323746.0412531245,262386.61043897923
+Deaths,Global,Both,All ages,Eye cancer,Number,2013,9631.329963135195,11225.631373245293,7671.323285009677
+Deaths,Global,Both,All ages,Soft tissue and other extraosseous sarcomas,Number,2013,42929.10613616145,52408.479453009066,37667.68599459702
+Deaths,Global,Both,All ages,Malignant neoplasm of bone and articular cartilage,Number,2013,57072.14151060797,62610.97422962341,45709.23137901061
+Deaths,Global,Both,All ages,Other malignant neoplasms,Number,2013,187587.81973993185,200501.18789814058,168613.092955284
+Deaths,Global,Both,All ages,Other neoplasms,Number,2013,43379.002322608314,50096.28319467341,37866.98694838704
+Deaths,Global,Both,All ages,Esophageal cancer,Number,2013,457698.4463434831,493594.39571459644,421943.40354768955
+Deaths,Global,Both,All ages,Stomach cancer,Number,2013,894426.8690676873,989651.5869280339,785034.7400681733
+Deaths,Global,Both,All ages,Liver cancer,Number,2013,413626.84158154664,439855.69697481074,389161.46829067875
+Deaths,Global,Both,All ages,Breast cancer,Number,2015,584621.3613603533,612297.5538913363,546695.9650991976
+Deaths,Global,Both,All ages,Cervical cancer,Number,2015,271388.903391837,288923.5707423882,252886.36686894964
+Deaths,Global,Both,All ages,Uterine cancer,Number,2015,83044.68041092399,90103.5588511003,74910.77683581019
+Deaths,Global,Both,All ages,Prostate cancer,Number,2015,372697.2456056643,397297.76357726677,331233.44132977474
+Deaths,Global,Both,All ages,Colon and rectum cancer,Number,2015,912467.9129900889,959209.3405019684,850179.0955182551
+Deaths,Global,Both,All ages,Lip and oral cavity cancer,Number,2015,177855.47417669627,186602.91374632466,167050.00709331222
+Deaths,Global,Both,All ages,Nasopharynx cancer,Number,2015,66960.77979006157,72111.41929578902,62335.550718234976
+Deaths,Global,Both,All ages,Other pharynx cancer,Number,2015,82411.12404918294,86832.83335460554,77721.2796449064
+Deaths,Global,Both,All ages,Gallbladder and biliary tract cancer,Number,2015,148955.51798480586,169183.0389873951,125718.50158442275
+Deaths,Global,Both,All ages,Pancreatic cancer,Number,2015,424478.29783976433,445121.08570447087,393774.41840310517
+Deaths,Global,Both,All ages,Malignant skin melanoma,Number,2015,58942.091171599546,62638.11058310691,53360.89980378385
+Deaths,Global,Both,All ages,Non-melanoma skin cancer,Number,2015,49635.26576514736,53937.85256577515,43168.1804953269
+Deaths,Global,Both,All ages,Ovarian cancer,Number,2015,161287.43987983992,170208.38555872164,146601.68523695524
+Deaths,Global,Both,All ages,Testicular cancer,Number,2015,10163.064147280653,10573.447670360538,9801.834292247464
+Deaths,Global,Both,All ages,Kidney cancer,Number,2015,144008.6943670791,149638.1907824283,136069.7035477646
+Deaths,Global,Both,All ages,Bladder cancer,Number,2015,194243.8382136864,209457.62716865446,178754.36635267595
+Deaths,Global,Both,All ages,Brain and central nervous system cancer,Number,2015,232162.88464353973,263174.14422656177,202294.71816171682
+Deaths,Global,Both,All ages,Thyroid cancer,Number,2015,39114.2389637546,41922.85324296798,34980.70614440223
+Deaths,Global,Both,All ages,Mesothelioma,Number,2015,27857.05051270169,29319.293306103136,25949.04539309517
+Deaths,Global,Both,All ages,Hodgkin lymphoma,Number,2015,27791.844850362428,35440.406647659736,20781.10105174019
+Deaths,Global,Both,All ages,Non-Hodgkin lymphoma,Number,2015,239087.29019351932,255060.6093071226,222440.7121458284
+Deaths,Global,Both,All ages,Multiple myeloma,Number,2015,99087.08846463995,107166.05550510855,88101.19029702022
+Deaths,Global,Both,All ages,Leukemia,Number,2015,303255.0798845361,330523.5206063,266223.2506894791
+Deaths,Global,Both,All ages,Other malignant neoplasms,Number,2015,197330.5555161029,211368.65879872002,176466.54960900356
+Deaths,Global,Both,All ages,Other neoplasms,Number,2015,46958.30359205533,54339.18150441086,40641.39184596723
+Deaths,Global,Both,All ages,Neuroblastoma and other peripheral nervous cell tumors,Number,2015,4752.521729538036,5288.172660548558,4062.1303839365055
+Deaths,Global,Both,All ages,Larynx cancer,Number,2013,102702.82276247905,107643.05445483475,97045.47594755967
+Deaths,Global,Both,All ages,"Tracheal, bronchus, and lung cancer",Number,2013,1725138.367992757,1815191.489501183,1615732.8376155265
+Deaths,Global,Both,All ages,Eye cancer,Number,2016,10132.531775932039,11845.06190357457,7985.603152470261
+Deaths,Global,Both,All ages,Soft tissue and other extraosseous sarcomas,Number,2016,46407.60263917985,56331.19894888531,40826.97795518027
+Deaths,Global,Both,All ages,Malignant neoplasm of bone and articular cartilage,Number,2016,61096.549036708835,67066.85180098466,49510.169184765524
+Deaths,Global,Both,All ages,Neuroblastoma and other peripheral nervous cell tumors,Number,2013,4509.835299416153,4992.250236593034,3908.3823588500977
+Deaths,Global,Both,All ages,Breast cancer,Number,2016,602614.2765852079,631002.1702761842,565415.7248047087
+Deaths,Global,Both,All ages,Cervical cancer,Number,2016,278212.8585738433,297984.4665463343,260264.85022171534
+Deaths,Global,Both,All ages,Uterine cancer,Number,2016,85922.28227483438,93856.37801521286,76984.74595576795
+Deaths,Global,Both,All ages,Prostate cancer,Number,2016,385858.91579090705,410689.71498556185,341944.96187305596
+Deaths,Global,Both,All ages,Colon and rectum cancer,Number,2016,938399.8300154171,988688.4295991282,861152.0635146352
+Deaths,Global,Both,All ages,Lip and oral cavity cancer,Number,2016,183877.72847650424,194177.88245484742,172417.1766417782
+Deaths,Global,Both,All ages,Nasopharynx cancer,Number,2016,68559.68692995599,74534.45245857758,63239.77708537357
+Deaths,Global,Both,All ages,Other pharynx cancer,Number,2016,85529.56700625703,91199.2919607484,80382.77696189465
+Deaths,Global,Both,All ages,Gallbladder and biliary tract cancer,Number,2016,152961.0616481811,172494.75611435596,127051.66107158565
+Deaths,Global,Both,All ages,Pancreatic cancer,Number,2016,440929.2148703707,464171.38636519,404047.5713522524
+Deaths,Global,Both,All ages,Malignant skin melanoma,Number,2016,58859.64950801568,62638.89609611511,53068.57535219703
+Deaths,Global,Both,All ages,Non-melanoma skin cancer,Number,2016,51426.25367068211,56007.33647031434,44216.71803170975
+Deaths,Global,Both,All ages,Ovarian cancer,Number,2016,165917.4839963198,175917.10312155852,150724.27852857602
+Deaths,Global,Both,All ages,Testicular cancer,Number,2016,10432.467708760698,10855.118295308816,10056.822800223843
+Deaths,Global,Both,All ages,Kidney cancer,Number,2016,147554.03589934786,153589.7799270976,138078.4336894163
+Deaths,Global,Both,All ages,Bladder cancer,Number,2016,200249.31199250955,215378.31091792276,182172.20823999264
+Deaths,Global,Both,All ages,Brain and central nervous system cancer,Number,2016,237614.76827818065,269074.1536057855,208614.8620805613
+Deaths,Global,Both,All ages,Thyroid cancer,Number,2016,40251.238518108024,43387.53785060771,35712.68744997226
+Deaths,Global,Both,All ages,Mesothelioma,Number,2016,28341.73917676298,29905.00768311192,26279.429715999704
+Deaths,Global,Both,All ages,Hodgkin lymphoma,Number,2016,27924.53329555945,35395.571994544574,20885.977345309988
+Deaths,Global,Both,All ages,Non-Hodgkin lymphoma,Number,2016,243935.55536449997,260988.53013073083,224554.7149700993
+Deaths,Global,Both,All ages,Multiple myeloma,Number,2016,102845.7099850789,111439.51736713674,92124.6842037073
+Deaths,Global,Both,All ages,Leukemia,Number,2016,307867.654489738,332530.9061788326,269485.1691217309
+Deaths,Global,Both,All ages,Eye cancer,Number,2018,10379.172331691856,12013.763230768158,8095.273746277948
+Deaths,Global,Both,All ages,Soft tissue and other extraosseous sarcomas,Number,2018,48979.380421698515,59629.876915301924,43090.61107040934
+Deaths,Global,Both,All ages,Malignant neoplasm of bone and articular cartilage,Number,2018,63573.653705228855,70320.58336042124,51382.69351512915
+Deaths,Global,Both,All ages,Other malignant neoplasms,Number,2016,202055.61593060553,216549.386043785,180431.35096681322
+Deaths,Global,Both,All ages,Other neoplasms,Number,2016,49011.53583187705,56190.81988274568,42486.442370798344
+Deaths,Global,Both,All ages,Neuroblastoma and other peripheral nervous cell tumors,Number,2016,4886.703018243828,5461.339155997777,4123.1207503548085
+Deaths,Global,Both,All ages,Neuroblastoma and other peripheral nervous cell tumors,Number,2018,5122.2211878254675,5782.184340391232,4293.248903267803
+Deaths,Global,Both,All ages,Eye cancer,Number,2012,9462.57959638004,10982.369920364164,7574.509277495769
+Deaths,Global,Both,All ages,Soft tissue and other extraosseous sarcomas,Number,2012,42228.00588262268,51218.26546083974,36942.468001912515
+Deaths,Global,Both,All ages,Malignant neoplasm of bone and articular cartilage,Number,2012,56083.88812410688,61411.48147246206,45122.12024218194
+Deaths,Global,Both,All ages,Breast cancer,Number,2018,635733.8571289058,669105.8603356064,595372.0404252214
+Deaths,Global,Both,All ages,Cervical cancer,Number,2018,287922.01092235453,307723.4294010527,267383.4897947119
+Deaths,Global,Both,All ages,Uterine cancer,Number,2018,91729.27522500553,100122.67748250256,82247.72737688878
+Deaths,Global,Both,All ages,Prostate cancer,Number,2018,406893.68995824904,438557.9975351914,358683.0804041143
+Deaths,Global,Both,All ages,Colon and rectum cancer,Number,2018,983973.9999611013,1043490.8270490693,909529.1886284575
+Deaths,Global,Both,All ages,Lip and oral cavity cancer,Number,2018,194984.37683678506,205164.02482441725,181302.0901451006
+Deaths,Global,Both,All ages,Nasopharynx cancer,Number,2018,71217.09001989634,78330.68148838783,64630.93170752498
+Deaths,Global,Both,All ages,Other pharynx cancer,Number,2018,92527.80174209698,97382.96742170281,87661.74590088788
+Deaths,Global,Both,All ages,Gallbladder and biliary tract cancer,Number,2018,161905.38992715135,181108.78312625407,133635.25531849317
+Deaths,Global,Both,All ages,Pancreatic cancer,Number,2018,470965.53916155273,498348.5231041372,433400.1998820419
+Deaths,Global,Both,All ages,Malignant skin melanoma,Number,2018,60032.628136535575,64150.72980031018,53856.201183124955
+Deaths,Global,Both,All ages,Non-melanoma skin cancer,Number,2018,53585.027409339455,58324.45735230931,46126.0903712944
+Deaths,Global,Both,All ages,Ovarian cancer,Number,2018,174180.4934281054,185406.87524310764,156889.72373027765
+Deaths,Global,Both,All ages,Testicular cancer,Number,2018,11049.368863763299,11519.607156739836,10553.789032925093
+Deaths,Global,Both,All ages,Kidney cancer,Number,2018,152884.96373694288,159418.56560100772,142946.4916670657
+Deaths,Global,Both,All ages,Bladder cancer,Number,2018,208740.54166512153,224912.91104214112,191128.75132213766
+Deaths,Global,Both,All ages,Brain and central nervous system cancer,Number,2018,248089.13438673862,284684.54076275276,215551.04536321523
+Deaths,Global,Both,All ages,Thyroid cancer,Number,2018,42103.51454556694,45419.442398809915,37595.14443320564
+Deaths,Global,Both,All ages,Mesothelioma,Number,2018,28655.772238004152,30319.365780393855,26555.831643580303
+Deaths,Global,Both,All ages,Hodgkin lymphoma,Number,2018,28028.78472288654,35460.47620188812,20922.890387780193
+Deaths,Global,Both,All ages,Non-Hodgkin lymphoma,Number,2018,254902.86644517127,274061.5219608353,235360.70878536074
+Deaths,Global,Both,All ages,Multiple myeloma,Number,2018,108855.75903294099,118140.02998210223,96214.4765573547
+Deaths,Global,Both,All ages,Leukemia,Number,2018,315636.38911941915,344949.2950240923,275882.13628824893
+Deaths,Global,Both,All ages,Esophageal cancer,Number,2018,498913.6971881502,555769.9236573795,447208.8914435352
+Deaths,Global,Both,All ages,Stomach cancer,Number,2018,922469.8386174649,1034588.1368824781,785965.8829559376
+Deaths,Global,Both,All ages,Liver cancer,Number,2018,463140.2610075927,513682.51602727216,422999.2170273564
+Deaths,Global,Both,All ages,Larynx cancer,Number,2018,112227.39348419712,118586.98666554611,105848.30442309957
+Deaths,Global,Both,All ages,"Tracheal, bronchus, and lung cancer",Number,2018,1891612.322194345,2044187.3257519833,1737999.6086709106
+Deaths,Global,Both,All ages,Eye cancer,Number,2014,9787.412447078577,11353.388813730562,7735.850699331552
+Deaths,Global,Both,All ages,Soft tissue and other extraosseous sarcomas,Number,2014,43852.89502851239,53301.20869193769,38493.69812027202
+Deaths,Global,Both,All ages,Malignant neoplasm of bone and articular cartilage,Number,2014,58424.30482839552,64138.00106034621,47018.11252119947
+Deaths,Global,Both,All ages,Neuroblastoma and other peripheral nervous cell tumors,Number,2012,4364.988062498004,4834.773253479515,3795.895000631702
+Deaths,Global,Both,All ages,Other malignant neoplasms,Number,2018,213148.97490109215,228893.31039770643,190961.18735823143
+Deaths,Global,Both,All ages,Other neoplasms,Number,2018,52379.704305061794,60395.493032934326,45107.293165186325
+Deaths,Global,Both,All ages,Neuroblastoma and other peripheral nervous cell tumors,Number,2014,4634.598513521588,5147.395427684096,3995.6272700383224
+Deaths,Global,Both,All ages,Eye cancer,Number,2017,10272.325809707414,11979.136122554279,8070.130575604554
+Deaths,Global,Both,All ages,Soft tissue and other extraosseous sarcomas,Number,2017,47855.00017294591,58084.76025183359,41982.30985455255
+Deaths,Global,Both,All ages,Malignant neoplasm of bone and articular cartilage,Number,2017,62413.430900434694,68956.30483621689,49955.71541409121
+Deaths,Global,Both,All ages,Esophageal cancer,Number,2014,459462.81166997313,499144.6238299844,420001.1825458149
+Deaths,Global,Both,All ages,Stomach cancer,Number,2014,891611.2116174866,988864.0423360253,784983.188653798
+Deaths,Global,Both,All ages,Liver cancer,Number,2014,429531.27787813975,455613.4789874684,399831.1848901547
+Deaths,Global,Both,All ages,Larynx cancer,Number,2014,104043.27313428544,109668.02521739088,98580.66681862912
+Deaths,Global,Both,All ages,"Tracheal, bronchus, and lung cancer",Number,2014,1754615.846893546,1856503.3533956774,1643063.135124483
+Deaths,Global,Both,All ages,Eye cancer,Number,2019,10514.302256812107,12280.350555849238,8199.92819974473
+Deaths,Global,Both,All ages,Soft tissue and other extraosseous sarcomas,Number,2019,49705.28961179269,59821.8527140267,43389.93002328407
+Deaths,Global,Both,All ages,Malignant neoplasm of bone and articular cartilage,Number,2019,64579.78089595208,71723.04325301843,52625.42189521386
+Deaths,Global,Both,All ages,Esophageal cancer,Number,2012,456959.0262277358,494629.5553460754,420835.1316677685
+Deaths,Global,Both,All ages,Stomach cancer,Number,2012,894580.7904925104,972045.4289320341,776108.4036848105
+Deaths,Global,Both,All ages,Liver cancer,Number,2012,400685.5912227571,427792.4054078518,376727.27030641126
+Deaths,Global,Both,All ages,Larynx cancer,Number,2012,101572.30841978294,106828.291529112,96478.2788277922
+Deaths,Global,Both,All ages,"Tracheal, bronchus, and lung cancer",Number,2012,1697623.2109774812,1784342.9380329053,1597868.2105056373
+Deaths,Global,Both,All ages,Eye cancer,Number,2020,10444.888305870629,12198.593912338267,8050.0496626272125
+Deaths,Global,Both,All ages,Soft tissue and other extraosseous sarcomas,Number,2020,49773.89538166172,60507.34267700699,43358.11780946312
+Deaths,Global,Both,All ages,Malignant neoplasm of bone and articular cartilage,Number,2020,65261.80672773004,72720.59431791422,52984.511669014435
+Deaths,Global,Both,All ages,Neuroblastoma and other peripheral nervous cell tumors,Number,2019,5244.143546659632,5935.452179768254,4396.923707489668
+Deaths,Global,Both,All ages,Eye cancer,Number,2021,10432.789207134603,12230.905595767701,8013.519827086506
+Deaths,Global,Both,All ages,Soft tissue and other extraosseous sarcomas,Number,2021,50203.1391987285,61280.375070367925,43231.997697590225
+Deaths,Global,Both,All ages,Malignant neoplasm of bone and articular cartilage,Number,2021,66114.25807447915,74466.87636626887,53305.42997764134
+Deaths,Global,Both,All ages,Neuroblastoma and other peripheral nervous cell tumors,Number,2021,5193.809796042352,5932.303384033241,4294.571807622043
+Deaths,Global,Both,All ages,Neuroblastoma and other peripheral nervous cell tumors,Number,2020,5149.204956778691,5864.046528690383,4272.327528933505
+Deaths,Global,Both,All ages,Esophageal cancer,Number,2016,477678.98119056254,522921.2533665041,432278.3308771297
+Deaths,Global,Both,All ages,Stomach cancer,Number,2016,908259.4475821853,1006031.7565741214,793131.3194895741
+Deaths,Global,Both,All ages,Liver cancer,Number,2016,448320.7316513333,484509.7596655675,414742.8819640043
+Deaths,Global,Both,All ages,Larynx cancer,Number,2016,108357.2583894018,114536.91304607899,101974.48815263368
+Deaths,Global,Both,All ages,"Tracheal, bronchus, and lung cancer",Number,2016,1828325.9531628343,1949627.2694270934,1685876.09722896
+Deaths,Global,Both,All ages,Esophageal cancer,Number,2017,485412.2328787507,539606.1778731412,439356.17938811914
+Deaths,Global,Both,All ages,Stomach cancer,Number,2017,911615.2135389611,1010893.3810942449,797131.3467207846
+Deaths,Global,Both,All ages,Liver cancer,Number,2017,454728.9022372146,499195.73084485816,417936.20626613614
+Deaths,Global,Both,All ages,Larynx cancer,Number,2017,109962.101437267,116300.03379709234,103068.82074740365
+Deaths,Global,Both,All ages,"Tracheal, bronchus, and lung cancer",Number,2017,1855173.9917192273,1992827.8274362923,1709178.9476015624
+Deaths,Global,Both,All ages,Breast cancer,Number,2012,542551.0465110181,565139.0874855407,510087.41472181346
+Deaths,Global,Both,All ages,Cervical cancer,Number,2012,254218.40076281462,271190.18257715384,237910.27070964914
+Deaths,Global,Both,All ages,Uterine cancer,Number,2012,77024.8934952474,82538.06102739522,68850.98191513775
+Deaths,Global,Both,All ages,Prostate cancer,Number,2012,346168.90733867924,368709.88136363507,305553.9039095619
+Deaths,Global,Both,All ages,Colon and rectum cancer,Number,2012,855410.7585505872,895418.1746811542,797620.2042670764
+Deaths,Global,Both,All ages,Lip and oral cavity cancer,Number,2012,161996.03710375138,169847.76610503506,152807.1952305315
+Deaths,Global,Both,All ages,Nasopharynx cancer,Number,2012,64084.98769331612,68532.14606787023,59652.90385693172
+Deaths,Global,Both,All ages,Other pharynx cancer,Number,2012,74173.48069629836,78477.69159559827,69796.88480325024
+Deaths,Global,Both,All ages,Gallbladder and biliary tract cancer,Number,2012,140551.4089270383,157337.7282374685,119153.30910628762
+Deaths,Global,Both,All ages,Pancreatic cancer,Number,2012,388805.2301114477,405988.9981242724,361900.11026466946
+Deaths,Global,Both,All ages,Malignant skin melanoma,Number,2012,56254.8770800424,59516.69258378483,51212.72640319015
+Deaths,Global,Both,All ages,Non-melanoma skin cancer,Number,2012,44775.91566106245,48233.279402067856,38616.60177806333
+Deaths,Global,Both,All ages,Ovarian cancer,Number,2012,152846.74298828823,161663.00574024557,140243.1033368604
+Deaths,Global,Both,All ages,Testicular cancer,Number,2012,9391.015295422163,9725.442798641572,9038.56710853303
+Deaths,Global,Both,All ages,Kidney cancer,Number,2012,134229.3860907529,139155.29344065068,126955.08912858994
+Deaths,Global,Both,All ages,Bladder cancer,Number,2012,181057.1075139937,194095.52912494226,167274.34464528126
+Deaths,Global,Both,All ages,Brain and central nervous system cancer,Number,2012,216488.44697011873,245129.55172918495,188617.07428219038
+Deaths,Global,Both,All ages,Thyroid cancer,Number,2012,36286.09150670121,38998.24347426812,32372.786912593292
+Deaths,Global,Both,All ages,Mesothelioma,Number,2012,26614.6213651794,27905.37476331163,24900.568128658957
+Deaths,Global,Both,All ages,Hodgkin lymphoma,Number,2012,27492.011554078057,35022.4389572436,21095.481343127445
+Deaths,Global,Both,All ages,Non-Hodgkin lymphoma,Number,2012,224545.23148883597,240795.87214598188,208173.63919273988
+Deaths,Global,Both,All ages,Multiple myeloma,Number,2012,89837.64620791761,96866.08408940415,80718.06573603112
+Deaths,Global,Both,All ages,Leukemia,Number,2012,293630.26261650043,318673.69571434055,259005.2321529984
+Deaths,Global,Both,All ages,Other malignant neoplasms,Number,2012,183362.05974293014,195981.00125068834,165835.9630145191
+Deaths,Global,Both,All ages,Other neoplasms,Number,2012,41690.9213769389,47819.964195273424,36545.15448540058
+Deaths,Global,Both,All ages,Breast cancer,Number,2014,567781.0764798761,592436.4438137773,534783.8947470193
+Deaths,Global,Both,All ages,Cervical cancer,Number,2014,264845.52643199975,280508.84881504707,247400.53065893098
+Deaths,Global,Both,All ages,Uterine cancer,Number,2014,80111.59226110496,86691.91347062466,71880.31873969593
+Deaths,Global,Both,All ages,Prostate cancer,Number,2014,361451.8876708475,384661.65963962954,320604.3443413692
+Deaths,Global,Both,All ages,Colon and rectum cancer,Number,2014,887799.4453582332,929405.0354742793,830922.3006793119
+Deaths,Global,Both,All ages,Lip and oral cavity cancer,Number,2014,172081.46056975148,180144.4089620234,162400.41568598527
+Deaths,Global,Both,All ages,Nasopharynx cancer,Number,2014,65564.0238850181,70303.23941051905,60906.01292582774
+Deaths,Global,Both,All ages,Other pharynx cancer,Number,2014,79124.75736496373,83435.44578255079,74768.69286272315
+Deaths,Global,Both,All ages,Gallbladder and biliary tract cancer,Number,2014,145573.54052197348,162602.27508906284,122738.32931428838
+Deaths,Global,Both,All ages,Pancreatic cancer,Number,2014,410801.9640383183,430463.88143401593,383363.18773667695
+Deaths,Global,Both,All ages,Malignant skin melanoma,Number,2014,58407.16259510786,61900.42509117715,52872.7377192469
+Deaths,Global,Both,All ages,Non-melanoma skin cancer,Number,2014,48119.968153319576,52309.71113444839,41623.99256031464
+Deaths,Global,Both,All ages,Ovarian cancer,Number,2014,158890.694197978,167838.81655590408,146091.2159184905
+Deaths,Global,Both,All ages,Testicular cancer,Number,2014,9911.784312525162,10302.387535077545,9559.290193566145
+Deaths,Global,Both,All ages,Kidney cancer,Number,2014,139983.07564717595,145530.8187611923,131521.1495307052
+Deaths,Global,Both,All ages,Bladder cancer,Number,2014,188689.54237056454,204915.7611042122,173577.40706434136
+Deaths,Global,Both,All ages,Brain and central nervous system cancer,Number,2014,226169.78529579367,256007.30541521058,197406.5637462263
+Deaths,Global,Both,All ages,Thyroid cancer,Number,2014,38084.01031316699,41017.740379069335,34276.1978971291
+Deaths,Global,Both,All ages,Mesothelioma,Number,2014,27567.42662784678,29042.81219279819,25679.658267160165
+Deaths,Global,Both,All ages,Hodgkin lymphoma,Number,2014,27746.31548931124,35230.445025619956,21115.73614754557
+Deaths,Global,Both,All ages,Non-Hodgkin lymphoma,Number,2014,233597.1223032896,249586.9740120374,217018.35737353697
+Deaths,Global,Both,All ages,Multiple myeloma,Number,2014,95537.9014347355,103552.90961521742,85471.20495545396
+Deaths,Global,Both,All ages,Leukemia,Number,2014,299354.0010129083,324539.6936567748,262548.3797124927
+Deaths,Global,Both,All ages,Other malignant neoplasms,Number,2014,192314.59987491104,206639.0826906887,172479.47848343136
+Deaths,Global,Both,All ages,Other neoplasms,Number,2014,45010.64718566853,52024.509928127205,39169.37338533205
+Deaths,Global,Both,All ages,Breast cancer,Number,2017,618103.424153728,651436.9975889148,578609.2820693607
+Deaths,Global,Both,All ages,Cervical cancer,Number,2017,283428.83454258577,304737.5941668559,264807.0001925569
+Deaths,Global,Both,All ages,Uterine cancer,Number,2017,88790.8100048577,97180.29641692137,80243.9250860401
+Deaths,Global,Both,All ages,Prostate cancer,Number,2017,395267.74820657884,422260.4355717637,350196.77722924936
+Deaths,Global,Both,All ages,Colon and rectum cancer,Number,2017,958612.6928789241,1013520.7949313831,887085.3568688132
+Deaths,Global,Both,All ages,Lip and oral cavity cancer,Number,2017,189200.29788942833,199742.78799619945,176648.00643284578
+Deaths,Global,Both,All ages,Nasopharynx cancer,Number,2017,69864.41041528538,76565.81129371398,63701.897148444965
+Deaths,Global,Both,All ages,Other pharynx cancer,Number,2017,88997.32492512731,94279.1707488726,83896.0915264019
+Deaths,Global,Both,All ages,Gallbladder and biliary tract cancer,Number,2017,157155.35851905769,176855.4988893935,131915.79115326726
+Deaths,Global,Both,All ages,Pancreatic cancer,Number,2017,455084.186661312,483212.9633566478,419967.73299143434
+Deaths,Global,Both,All ages,Malignant skin melanoma,Number,2017,59107.98897291602,63158.60987382099,52977.6916674226
+Deaths,Global,Both,All ages,Non-melanoma skin cancer,Number,2017,52486.015553742414,57870.7645114966,45237.58988538511
+Deaths,Global,Both,All ages,Ovarian cancer,Number,2017,170059.07823986278,180701.3007902223,155113.0244655622
+Deaths,Global,Both,All ages,Testicular cancer,Number,2017,10743.652494032023,11219.188786187395,10317.589863994519
+Deaths,Global,Both,All ages,Kidney cancer,Number,2017,149594.06355682792,156229.71975962145,140435.57771605777
+Deaths,Global,Both,All ages,Bladder cancer,Number,2017,204455.3283093124,220221.38952591992,186845.55601669813
+Deaths,Global,Both,All ages,Brain and central nervous system cancer,Number,2017,242686.69330003377,274201.1032049342,210171.88803790254
+Deaths,Global,Both,All ages,Thyroid cancer,Number,2017,40954.50821473692,44045.47839641261,36571.76595358241
+Deaths,Global,Both,All ages,Mesothelioma,Number,2017,28504.276676368558,30231.872373567498,26463.202851592465
+Deaths,Global,Both,All ages,Hodgkin lymphoma,Number,2017,28013.798443406267,35362.36415402055,21235.464200736053
+Deaths,Global,Both,All ages,Non-Hodgkin lymphoma,Number,2017,249322.0844347346,267498.0602954663,230107.46682747197
+Deaths,Global,Both,All ages,Multiple myeloma,Number,2017,105769.11517997307,114988.0630466815,93956.42652230567
+Deaths,Global,Both,All ages,Leukemia,Number,2017,311727.9941653005,341754.1543586959,274842.17719723965
+Deaths,Global,Both,All ages,Other malignant neoplasms,Number,2017,207819.20068018232,223435.02893026525,185174.52698728442
+Deaths,Global,Both,All ages,Other neoplasms,Number,2017,50823.03640059916,57812.80407979588,43902.56060962936
+Deaths,Global,Both,All ages,Breast cancer,Number,2019,651116.6363807078,687962.6212272146,605540.4312622068
+Deaths,Global,Both,All ages,Cervical cancer,Number,2019,290948.9262524112,312279.1406028612,268729.9538368656
+Deaths,Global,Both,All ages,Uterine cancer,Number,2019,94200.28194492725,103867.98904740662,84571.06766178114
+Deaths,Global,Both,All ages,Prostate cancer,Number,2019,419760.86791396776,450012.7103249252,370481.3098286203
+Deaths,Global,Both,All ages,Colon and rectum cancer,Number,2019,1009563.97401665,1071258.0691103484,931471.466447642
+Deaths,Global,Both,All ages,Lip and oral cavity cancer,Number,2019,200510.05611254275,212740.58289041376,186770.4160412027
+Deaths,Global,Both,All ages,Nasopharynx cancer,Number,2019,72680.26898153339,80158.39164876733,65709.40645240815
+Deaths,Global,Both,All ages,Other pharynx cancer,Number,2019,95285.8199799238,101055.45760143036,89999.74771575634
+Deaths,Global,Both,All ages,Gallbladder and biliary tract cancer,Number,2019,166063.2499426157,185713.08776730802,138103.68178251584
+Deaths,Global,Both,All ages,Pancreatic cancer,Number,2019,486869.2124394401,517184.6120149896,446272.25949160615
+Deaths,Global,Both,All ages,Malignant skin melanoma,Number,2019,60756.36209154259,65378.848802060624,54102.373715834416
+Deaths,Global,Both,All ages,Non-melanoma skin cancer,Number,2019,55120.52383132499,60113.85219523984,47214.99802659593
+Deaths,Global,Both,All ages,Ovarian cancer,Number,2019,178244.2870783309,190696.525525595,162289.13451090295
+Deaths,Global,Both,All ages,Testicular cancer,Number,2019,11318.647914749694,11888.76275916259,10836.750537807755
+Deaths,Global,Both,All ages,Kidney cancer,Number,2019,156512.21814946455,163559.52211072252,145790.61405584626
+Deaths,Global,Both,All ages,Bladder cancer,Number,2019,214455.9049422421,232045.350433116,195661.80740341052
+Deaths,Global,Both,All ages,Brain and central nervous system cancer,Number,2019,252814.7758549981,290739.1773885749,218010.06253195115
+Deaths,Global,Both,All ages,Thyroid cancer,Number,2019,43090.42768004866,46717.94194524968,38321.14097084828
+Deaths,Global,Both,All ages,Mesothelioma,Number,2019,28912.278031082784,30779.408251460645,26661.220450964436
+Deaths,Global,Both,All ages,Hodgkin lymphoma,Number,2019,28096.129483287343,35810.8297209417,20992.040100310773
+Deaths,Global,Both,All ages,Non-Hodgkin lymphoma,Number,2019,260310.8759262416,280560.96445893496,238922.90482261774
+Deaths,Global,Both,All ages,Multiple myeloma,Number,2019,112242.05578590822,122452.48647793736,99412.28740184406
+Deaths,Global,Both,All ages,Leukemia,Number,2019,318975.29708121537,348086.31921859033,275360.5533201005
+Deaths,Global,Both,All ages,Other malignant neoplasms,Number,2019,217700.78314817927,235062.97399362185,197119.4769162248
+Deaths,Global,Both,All ages,Other neoplasms,Number,2019,53510.64122144764,61589.22266891813,46388.817604146454
+Deaths,Global,Both,All ages,Esophageal cancer,Number,2019,514057.5039920972,575457.6120845546,457445.19249650615
+Deaths,Global,Both,All ages,Stomach cancer,Number,2019,934391.223398339,1052110.3128167426,803724.5904728945
+Deaths,Global,Both,All ages,Liver cancer,Number,2019,468410.2589292069,518894.5288403943,425395.8120603035
+Deaths,Global,Both,All ages,Larynx cancer,Number,2019,114470.08809936135,121859.1123449617,108200.53032228179
+Deaths,Global,Both,All ages,"Tracheal, bronchus, and lung cancer",Number,2019,1933824.6733933326,2092006.084273468,1774774.862273814
+Deaths,Global,Both,All ages,Breast cancer,Number,2020,660081.7763174974,699310.1621258078,612875.769112571
+Deaths,Global,Both,All ages,Cervical cancer,Number,2020,293057.3535494914,317126.20734412596,270105.20943310193
+Deaths,Global,Both,All ages,Uterine cancer,Number,2020,95338.2135494182,105338.34074870285,84908.83351578831
+Deaths,Global,Both,All ages,Prostate cancer,Number,2020,427525.64842913003,460474.5179556614,376515.1742917243
+Deaths,Global,Both,All ages,Colon and rectum cancer,Number,2020,1023831.078888268,1093626.9203996288,940931.9746248388
+Deaths,Global,Both,All ages,Lip and oral cavity cancer,Number,2020,204155.17417757286,218626.68273288445,187257.64240912674
+Deaths,Global,Both,All ages,Nasopharynx cancer,Number,2020,74000.0126904931,82545.40259986087,66545.01066281252
+Deaths,Global,Both,All ages,Other pharynx cancer,Number,2020,96724.25570337,103166.07657591405,90060.0420253348
+Deaths,Global,Both,All ages,Gallbladder and biliary tract cancer,Number,2020,168271.97406536914,187959.57532315332,138682.82000301473
+Deaths,Global,Both,All ages,Pancreatic cancer,Number,2020,494507.7815983149,528116.4909321656,452276.35205460776
+Deaths,Global,Both,All ages,Malignant skin melanoma,Number,2020,60781.26214655708,65114.95562854745,54149.699499875125
+Deaths,Global,Both,All ages,Non-melanoma skin cancer,Number,2020,56044.867928751744,61336.366108076574,48445.63910616176
+Deaths,Global,Both,All ages,Ovarian cancer,Number,2020,181083.70538482085,195399.85917642576,163449.70631829265
+Deaths,Global,Both,All ages,Testicular cancer,Number,2020,11300.334139214565,12013.280159134201,10734.057416344605
+Deaths,Global,Both,All ages,Kidney cancer,Number,2020,158327.1490765482,165688.57566297293,147606.15984445415
+Deaths,Global,Both,All ages,Bladder cancer,Number,2020,218290.73727518826,236346.26372302978,198439.5084010873
+Deaths,Global,Both,All ages,Brain and central nervous system cancer,Number,2020,254652.29517996105,290545.3072107868,219773.018754396
+Deaths,Global,Both,All ages,Thyroid cancer,Number,2020,43796.49679160465,47797.42682943484,38986.9567959488
+Deaths,Global,Both,All ages,Mesothelioma,Number,2020,29107.910648131652,31009.589560768298,26815.13155534244
+Deaths,Global,Both,All ages,Hodgkin lymphoma,Number,2020,28090.097272208295,35820.4316266343,20852.53852907844
+Deaths,Global,Both,All ages,Non-Hodgkin lymphoma,Number,2020,263008.45540838386,282988.9627335222,241140.37898823788
+Deaths,Global,Both,All ages,Multiple myeloma,Number,2020,114017.442818622,126934.53243724874,100618.53916161583
+Deaths,Global,Both,All ages,Leukemia,Number,2020,318302.11648613866,347248.9712862532,276980.6784287261
+Deaths,Global,Both,All ages,Other malignant neoplasms,Number,2020,219280.35679355485,236451.94584547827,195785.2095698261
+Deaths,Global,Both,All ages,Other neoplasms,Number,2020,54245.25145053112,63662.0653656862,46370.45372913377
+Deaths,Global,Both,All ages,Esophageal cancer,Number,2020,526254.3174102948,588828.0802214213,466272.46620951855
+Deaths,Global,Both,All ages,Stomach cancer,Number,2020,943186.4525257676,1063379.1499041743,800912.8162343398
+Deaths,Global,Both,All ages,Liver cancer,Number,2020,475269.11363745696,522102.5058666018,432671.8696293139
+Deaths,Global,Both,All ages,Larynx cancer,Number,2020,116045.02872145185,124088.54001141775,107419.96534775094
+Deaths,Global,Both,All ages,"Tracheal, bronchus, and lung cancer",Number,2020,1970892.8137292136,2147656.177455658,1788680.346577614
+Deaths,Global,Both,All ages,Breast cancer,Number,2021,674199.4127323164,720822.5506086979,623371.5464594928
+Deaths,Global,Both,All ages,Cervical cancer,Number,2021,296667.2419142357,321905.71690746455,272058.62282246683
+Deaths,Global,Both,All ages,Uterine cancer,Number,2021,97672.08135002268,108061.53898314656,86515.79363692197
+Deaths,Global,Both,All ages,Prostate cancer,Number,2021,432463.3321280798,463645.27659686544,381872.7851761238
+Deaths,Global,Both,All ages,Colon and rectum cancer,Number,2021,1044072.2109567161,1120169.3353408312,950187.6097589601
+Deaths,Global,Both,All ages,Lip and oral cavity cancer,Number,2021,208379.42822687645,224162.0771911071,191287.97335230542
+Deaths,Global,Both,All ages,Nasopharynx cancer,Number,2021,75358.67023293299,83706.344289194,67515.37496030713
+Deaths,Global,Both,All ages,Other pharynx cancer,Number,2021,98435.11468186467,105484.90263576568,91566.8111137236
+Deaths,Global,Both,All ages,Gallbladder and biliary tract cancer,Number,2021,171961.16536888963,194238.42212608253,142351.84768481329
+Deaths,Global,Both,All ages,Pancreatic cancer,Number,2021,505752.16383183165,543899.4068382942,461224.42425184237
+Deaths,Global,Both,All ages,Malignant skin melanoma,Number,2021,61549.73143579219,66265.02205197877,54852.449838530236
+Deaths,Global,Both,All ages,Non-melanoma skin cancer,Number,2021,56913.2307466503,63037.41545581188,48761.351319748515
+Deaths,Global,Both,All ages,Ovarian cancer,Number,2021,185608.6782150416,201012.67172322524,167961.97888577436
+Deaths,Global,Both,All ages,Testicular cancer,Number,2021,11388.300721894417,12055.62259560701,10770.696944634268
+Deaths,Global,Both,All ages,Kidney cancer,Number,2021,161194.54180675137,169348.2848557712,150317.57158299707
+Deaths,Global,Both,All ages,Bladder cancer,Number,2021,221888.32315714975,242326.4608882479,200567.1678837723
+Deaths,Global,Both,All ages,Brain and central nervous system cancer,Number,2021,258626.79905479914,296133.93972036307,222185.21325288547
+Deaths,Global,Both,All ages,Thyroid cancer,Number,2021,44798.54165743666,48541.0043965831,39924.72756137713
+Deaths,Global,Both,All ages,Mesothelioma,Number,2021,29618.934346252634,31764.63026524193,27424.48097899445
+Deaths,Global,Both,All ages,Hodgkin lymphoma,Number,2021,28179.989584609102,35652.96385974608,20895.402708872487
+Deaths,Global,Both,All ages,Non-Hodgkin lymphoma,Number,2021,267061.2032772285,288695.7236972967,246094.68959597455
+Deaths,Global,Both,All ages,Multiple myeloma,Number,2021,116359.62665053726,128470.56755307346,103078.62447071595
+Deaths,Global,Both,All ages,Leukemia,Number,2021,320283.6291596394,349049.9009372441,274969.4910875972
+Deaths,Global,Both,All ages,Other malignant neoplasms,Number,2021,222208.37152869167,240746.737961254,199406.3024104532
+Deaths,Global,Both,All ages,Other neoplasms,Number,2021,55179.06647064079,64295.47769535356,46760.974070001386
+Deaths,Global,Both,All ages,Esophageal cancer,Number,2021,538601.9091872636,603405.5489056602,475943.9848084296
+Deaths,Global,Both,All ages,Stomach cancer,Number,2021,954373.6015463611,1089576.5838839228,821750.8059909112
+Deaths,Global,Both,All ages,Liver cancer,Number,2021,483875.12694864016,540177.1153918189,440400.31538804265
+Deaths,Global,Both,All ages,Larynx cancer,Number,2021,117251.60135143438,125952.42430090674,109354.573488353
+Deaths,Global,Both,All ages,"Tracheal, bronchus, and lung cancer",Number,2021,2016547.4368651747,2218371.8903818233,1820497.6664727218

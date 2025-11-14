@@ -5,6 +5,28 @@ date: "2025-11-14"
 output: html_document
 ---
 
+#current working areas
+Our project tasks are all focused on this somewhat new data set and trying to determine the overall nature of clinical trials around the world. With access to data such as geographics, sponsor type, and cancer treatment type, there are many details we want to explore further. Gregory is currently looking into temporal trends with clinical trials and if the rapid growth of trials reflects a decrease in death rates. Scarlett is looking into the sponsor types of the trials and establishing a way to show geographics/location of the trials. Khalessi is working on optimizing the categorization of the llm that scapred the data, ensuring accurate criteria in addition to looking into the overall funding of cancer types.
+
+#Guide
+Currently, we have our data spread throughout most docs but this has all of it combined with the exception of the llm rmd titled "clean.rmd" in the code folder. In addition, there is a read.me file that discusses the data and a brief overview of it. 
+
+#Movation and research question
+Our current focus for our project is centered around looking into how global burden of disease is being addressed by clinical trials around the world. Different center types have different amount of funding which heavily influence there development to create a successful treatment to said cancer, with many under funded types of cancer having signifianlty less amount of funding for research. As a result, our current research question is: How does clinical research around the world address known disease burdens? Is there sufficient research to address the health issues?
+
+#Contribution of FP4.
+The work for this was spread out quite evenly, with each person being responsible for 3 slides for the presentation aspect. We split up the sections to ensure there was a logical flow to the presentation. For this written section, we each copied the important aspects of our code into this rmd. Gregory wrote the reflection portions of this document. Khalessi and scarlett worked on the read.me file. 
+
+#Ethics
+Over all, our goal is to minimize any people who might be hurt by this study. After conversations with our experts, they push us to both make our data accessible to all people and to look into cancer types that effect lower income countries who might not have the awareness to gain more funding to further research cancer types that they are more effected by. We understand that the nature of clinical trials is very specific and that not all people can be candidates for the trials, thus we are looking at it more from a developmental standard and hope that these trials will progress into common proven treatments for millions of people. 
+
+#Summy contributuons
+Overall in this project, the work has been divided quite evenly. All three of us were able to looking into datasets which we eventually settled upon the gbd and clinicaltrials.gov data. From here, we all created different graphs looking at different issues which can be seen in the code sections below. Khalessi completed the scraping of the cdc website using open ai 4.1 mini (we think but unsure at the moment but will confirm) to format the data into something more usable for our analysis. With this still somewhat new data set, we are all working on establishing trends and focusing on addressing our central research question. 
+
+#Ai Useage
+Some ai was used to improve visuals such as color scale and themes, it was also used to scrape data from the cdc clinical trials website. 
+
+
 #loading packages
 ```{r}
 library(readr)

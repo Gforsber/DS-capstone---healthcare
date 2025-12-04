@@ -54,11 +54,18 @@ Overall, this work provides a reproducible framework for evaluating research equ
 
 ├── Code/
 │   ├── Clean.R              # Clean data with LLM
-│   ├── Visual.R 
+│   ├── Visual.R
+|   ├── FP4.R                #FP4 central code and report
+|   ├── Exploration.QMD
 
 ├── Data/
 │   ├── ctg_clean.csv
 │   ├── gbd_death.csv
+│   ├── IHME-GBD_2021_DATA-eae6be09-1.csv
+│   ├── IHME-GBD_2021_DATA-12473b24-1.csv
+│   ├── ctg_clean.csv
+│   ├── gbd_death.csv
+│   ├── IHME_data.csv
 
 ├── Result/
 │   ├── Clinical Trial Share vs. Death Share by Cancer Type.png 

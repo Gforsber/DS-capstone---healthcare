@@ -5,6 +5,28 @@ date: "2025-11-14"
 output: html_document
 ---
 
+#current working areas
+Our project tasks are all focused on this somewhat new data set and trying to determine the overall nature of clinical trials around the world. With access to data such as geographics, sponsor type, and cancer treatment type, there are many details we want to explore further. Gregory is currently looking into temporal trends with clinical trials and if the rapid growth of trials reflects a decrease in death rates. Scarlett is looking into the sponsor types of the trials and establishing a way to show geographics/location of the trials. Khalessi is working on optimizing the categorization of the llm that scapred the data, ensuring accurate criteria in addition to looking into the overall funding of cancer types.
+
+#Guide
+Currently, we have our data spread throughout most docs but this has all of it combined with the exception of the llm rmd titled "clean.rmd" in the code folder. In addition, there is a read.me file that discusses the data and a brief overview of it. 
+
+#Movation and research question
+Our current focus for our project is centered around looking into how global burden of disease is being addressed by clinical trials around the world. Different center types have different amount of funding which heavily influence there development to create a successful treatment to said cancer, with many under funded types of cancer having signifianlty less amount of funding for research. As a result, our current research question is: How does clinical research around the world address known disease burdens? Is there sufficient research to address the health issues?
+
+#Contribution of FP4.
+The work for this was spread out quite evenly, with each person being responsible for 3 slides for the presentation aspect. We split up the sections to ensure there was a logical flow to the presentation. For this written section, we each copied the important aspects of our code into this rmd. Gregory wrote the reflection portions of this document. Khalessi and scarlett worked on the read.me file. 
+
+#Ethics
+Over all, our goal is to minimize any people who might be hurt by this study. After conversations with our experts, they push us to both make our data accessible to all people and to look into cancer types that effect lower income countries who might not have the awareness to gain more funding to further research cancer types that they are more effected by. We understand that the nature of clinical trials is very specific and that not all people can be candidates for the trials, thus we are looking at it more from a developmental standard and hope that these trials will progress into common proven treatments for millions of people. 
+
+#Summy contributuons
+Overall in this project, the work has been divided quite evenly. All three of us were able to looking into datasets which we eventually settled upon the gbd and clinicaltrials.gov data. From here, we all created different graphs looking at different issues which can be seen in the code sections below. Khalessi completed the scraping of the cdc website using open ai 4.1 mini (we think but unsure at the moment but will confirm) to format the data into something more usable for our analysis. With this still somewhat new data set, we are all working on establishing trends and focusing on addressing our central research question. 
+
+#Ai Useage
+Some ai was used to improve visuals such as color scale and themes, it was also used to scrape data from the cdc clinical trials website. 
+
+
 #loading packages
 ```{r}
 library(readr)
@@ -179,6 +201,10 @@ p1 <- ggplot(compare_df, aes(x = death_share, y = trials_share, label = Conditio
   theme_minimal(base_size = 13)
 p1
 ```
+
+- This graph compares how many clinical trials each cancer type receives (y-axis) with how much global mortality it causes (x-axis). Both axes use log scales. The dashed diagonal line represents a 1:1 ratio, where a cancer gets research attention proportional to its death burden. The Green points represent the well-studied or over-studied cancers, which are those with more trials than expected relative to how many people they kill. Red points represent under-studied cancers, which are those with fewer trials than expected given their mortality burden. Point size shows the number of trials (larger = more trials).
+
+
 ```{r}
 library(lubridate)
 
@@ -201,6 +227,7 @@ p2 <- ctg %>%
 p2
 ```
 
+- This graph shows how the number of new cancer clinical trials has grown over time. From 1970 to the early 1990s, very few trials were launched each year. Starting in the mid-1990s, trial activity increased sharply, and by the 2000s the growth became exponential. Today, we see more than 600 new cancer trials being initiated each year.
 
 #Scarlett
 ```{r}
@@ -298,9 +325,6 @@ Liver_cancer <- ggplot(mapdata) +
 )
 
 ```
-
-
-
 
 
 ```{r}
@@ -406,5 +430,10 @@ final_cancer_map <- annotate_figure(
 
 final_cancer_map
 ```
+
+ 
+- This visualization shows global patterns in age-standardized cancer mortality rates for the top four cancer types: stomach, lung, colorectal, and breast cancer. The data come from the Global Burden of Disease (GBD) study conducted by the Institute for Health Metrics and Evaluation (IHME). Each panel presents a world map shaded by deaths per 100,000 people. The color scale is consistent across all panels: green represents relatively lower mortality, while orange and red indicate relatively higher mortality. Some territories appear in grey, reflecting areas where GBD does not provide data.  
+
+- Some key finding are that lung cancer mortality is especially high in Eastern Europe and East Asia, regions which might relate to smoking rates and air pollution. In contrast, breast cancer mortality is relatively low in wealthier countries with strong screening and treatment programs, but higher in parts of sub-Saharan Africa where access to health care is more limited. 
 
 

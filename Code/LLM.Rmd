@@ -18,38 +18,19 @@ library(tibble)
 library(stringr)
 ```
 
-```{r}
-IctrpResults <- read_csv("../Data/IctrpResults.csv")
-```
 
 ```{r}
-useful_vars <- c(
-  "TrialID",
-  "Source Register",
-  "Date registration",
-  "Recruitment Status", "Target size", "Study type", "Study design", "Phase",
-  "Countries",
-  "Inclusion agemin", "Inclusion agemax", "Inclusion gender",
-  "Condition", 
-  "Primary sponsor", "Source Name", "Secondary Sponsor",
-  "Ethics Status", "Ethics Approval Date",
-  "results yes no", "results date completed"
-)
-
-clean_df <- IctrpResults |> select(any_of(useful_vars))
-
-clean_df<- clean_df %>%
-  filter(`Recruitment Status` != "Not Recruiting")
-
-write.csv(clean_df, "LLMRaw.csv")
+LLMRaw <- read_csv("../Data/LLMRaw.csv")
 
 ```
 
 ```{r}
-clean_df <- clean_df %>%
+clean_df <- LLMRaw %>%
   filter(!str_detect(tolower(`Study type`), "observational"))
+clean_df <- clean_df %>%
+  mutate(`Recruitment Status` = trimws(`Recruitment Status`)) %>%
+  filter(tolower(`Recruitment Status`) != "not recruiting")
 
-clean_df100 <- head(clean_df, 100)
 ```
 
 ```{r}
@@ -87,19 +68,6 @@ Sys.setenv(OPENAI_API_KEY = "")
 ## Test
 
 ```{r}
-chunk_vec <- function(x, size) {
-  split(x, ceiling(seq_along(x) / size))
-}
-```
-
-
-```{r}
-
-## ----------------------------------------------------------
-## 1. Helpers
-## ----------------------------------------------------------
-
-# Simple null-coalescing operator
 `%||%` <- function(x, y) {
   if (is.null(x) || length(x) == 0) y else x
 }
@@ -119,7 +87,6 @@ is_surgery_focused_condition <- function(x) {
           "surgery", "surgical", "operat(ion|ive)",
           "resection", "debulking",
           "post\\s*-?operative", "peri\\s*-?operative",
-          # common named procedures
           "nephrectomy", "gastrectomy", "colectomy", "hemicolectomy",
           "lobectomy", "mastectomy", "hysterectomy", "prostatectomy",
           "arthroplasty", "bypass"
@@ -132,7 +99,7 @@ is_surgery_focused_condition <- function(x) {
 }
 
 ## ----------------------------------------------------------
-## 2. Allowed labels (GBD-style cancer causes)
+## Allowed labels (GBD-style cancer causes)
 ## ----------------------------------------------------------
 allowed_labels <- c(
   "Soft tissue and other extraosseous sarcomas",
@@ -168,17 +135,18 @@ allowed_labels <- c(
   "Non-Hodgkin lymphoma",
   "Liver cancer",
   "Larynx cancer",
-  "Tracheal, bronchus, and lung cancer"
+  "Tracheal, bronchus, and lung cancer",
+  "Neoplasms"  # generic bucket used in your rules
 )
 
 ## ----------------------------------------------------------
-## 3. Main function: normalize conditions with OpenAI
+## Main function using /v1/responses
 ## ----------------------------------------------------------
 llm_normalize_conditions_one <- function(
   conditions,
   labels = allowed_labels,
   model = "gpt-4.1-mini",
-  batch_size = 20,
+  batch_size = 10,      # slightly smaller batch for extra safety
   temperature = 0
 ) {
   api_key <- Sys.getenv("OPENAI_API_KEY")
@@ -186,19 +154,16 @@ llm_normalize_conditions_one <- function(
     stop("Set OPENAI_API_KEY via Sys.setenv('OPENAI_API_KEY' = 'sk-...').", call. = FALSE)
   }
 
-  base_url <- "https://api.openai.com/v1/chat/completions"
+  base_url <- "https://api.openai.com/v1/responses"
 
-  # ------------------------------------------------------------------
-  # Drop surgery-focused rows BEFORE sending to the LLM
-  # ------------------------------------------------------------------
   conditions <- as.character(conditions %||% "")
   orig_idx   <- seq_along(conditions)
-  surg_mask  <- is_surgery_focused_condition(conditions)
 
+  # --- 1. Drop surgery-focused rows BEFORE calling the model -----------------
+  surg_mask       <- is_surgery_focused_condition(conditions)
   conditions_keep <- conditions[!surg_mask]
   idx_keep        <- orig_idx[!surg_mask]
 
-  # If everything is surgery-focused, return empty tibble
   if (length(conditions_keep) == 0L) {
     return(tibble(
       row = integer(0),
@@ -207,9 +172,7 @@ llm_normalize_conditions_one <- function(
     ))
   }
 
-  # ------------------------------------------------------------------
-  # System prompt and few-shot examples
-  # ------------------------------------------------------------------
+  # --- 2. Shared instructions (system-style text) ----------------------------
   strict_rules <- paste0(
     "You will map each clinical-trial condition string to EXACTLY ONE canonical cancer label.\n",
     "\nOUTPUT FORMAT\n",
@@ -261,43 +224,13 @@ llm_normalize_conditions_one <- function(
     "\nFINAL FALLBACK\n",
     "- If none of the above applies and there is no generic cancer context, return 'Other neoplasms'.\n",
     "\nCONSTRAINTS\n",
-    "- EXACTLY ONE label per input; label must be one of the ALLOWED LABELS.\n"
-  )
-
-  system_prompt <- paste0(
-    strict_rules,
+    "- EXACTLY ONE label per input; label must be one of the ALLOWED LABELS.\n",
     "\nALLOWED LABELS:\n- ",
     paste(labels, collapse = "\n- ")
   )
 
-  fewshot_user <- paste0(
-    "Map to EXACTLY ONE allowed label:\n",
-    "- \"Human Papillomavirus Infections\"\n",
-    "- \"Barrett Esophagus | Esophageal Stenosis\"\n",
-    "- \"Spinal Tumors, Trauma Patients, Minocycline.\"\n",
-    "- \"Treatment of Bone Metastases\"\n",
-    "- \"Upper Extremity Deep Vein Thrombosis | Central Venous Catheter Thrombosis | Cancer\"\n",
-    "- \"Uterine Myoma, Ovary Neoplasm, Adenomyosis\"\n",
-    "- \"Tobacco Smoking\"\n",
-    "- \"Hematologic Neoplasms\"\n"
-  )
-
-  fewshot_assistant <- jsonlite::toJSON(list(
-    list(input = "Human Papillomavirus Infections", label = "Cervical cancer"),
-    list(input = "Barrett Esophagus | Esophageal Stenosis", label = "Esophageal cancer"),
-    list(input = "Spinal Tumors, Trauma Patients, Minocycline.", label = "Brain and central nervous system cancer"),
-    list(input = "Treatment of Bone Metastases", label = "Malignant neoplasm of bone and articular cartilage"),
-    list(input = "Upper Extremity Deep Vein Thrombosis | Central Venous Catheter Thrombosis | Cancer", label = "Neoplasms"),
-    list(input = "Uterine Myoma, Ovary Neoplasm, Adenomyosis", label = "Uterine cancer"),
-    list(input = "Tobacco Smoking", label = "Tracheal, bronchus, and lung cancer"),
-    list(input = "Hematologic Neoplasms", label = "Leukemia")
-  ), auto_unbox = TRUE)
-
-  # ------------------------------------------------------------------
-  # Batch over conditions_keep
-  # ------------------------------------------------------------------
+  # --- 3. Batch over conditions_keep ----------------------------------------
   batches <- chunk_vec(conditions_keep, batch_size)
-
   results <- vector("list", length(conditions_keep))
   names(results) <- seq_along(conditions_keep)
   idx_offset <- 0L
@@ -306,9 +239,17 @@ llm_normalize_conditions_one <- function(
     idxs <- seq_along(b) + idx_offset
     idx_offset <- idx_offset + length(b)
 
-    user_payload <- list(
-      inputs = unname(as.character(b)),
-      note = "Return STRICT JSON only; no prose."
+    # Just pass the inputs as a bullet list, not nested JSON
+    inputs_block <- paste0("- ", b, collapse = "\n")
+
+    prompt_text <- paste(
+      strict_rules,
+      "\n\nNOW MAP THESE INPUTS.\n",
+      "Return a STRICT JSON array of objects in this order:\n",
+      "[{\"input\":\"<original>\",\"label\":\"<one label>\"}, ...]\n",
+      "No prose, no explanation.\n\nINPUTS:\n",
+      inputs_block,
+      sep = "\n"
     )
 
     req <- request(base_url) |>
@@ -318,53 +259,54 @@ llm_normalize_conditions_one <- function(
       ) |>
       req_body_json(list(
         model = model,
-        temperature = temperature,
-        messages = list(
-          list(role = "system", content = system_prompt),
-          list(role = "user", content = fewshot_user),
-          list(role = "assistant", content = fewshot_assistant),
-          list(
-            role = "user",
-            content = paste0(
-              "Map these inputs (STRICT JSON array only):\n",
-              toJSON(user_payload, auto_unbox = TRUE)
-            )
-          )
-        )
+        input = prompt_text,
+        temperature = temperature
       ))
 
-    resp <- req_perform(req)
-    txt  <- resp_body_string(resp)
+    resp <- req_perform(req, error_call = NULL)
 
-    # Try parsing directly; if it's an envelope, grab choices[[1]]$message$content
-    parsed <- tryCatch(
+    if (resp_status(resp) >= 400) {
+      msg <- resp_body_string(resp)
+      stop(
+        "OpenAI API error (HTTP ", resp_status(resp), ") on batch starting at index ",
+        min(idxs), ":\n", msg
+      )
+    }
+
+    txt <- resp_body_string(resp)
+
+    parsed_resp <- tryCatch(
       jsonlite::fromJSON(txt, simplifyVector = FALSE),
       error = function(e) NULL
     )
 
-    if (is.null(parsed)) {
-      stop("Failed to parse OpenAI response as JSON.\nRaw text:\n", txt)
+    if (is.null(parsed_resp) || is.null(parsed_resp$output)) {
+      stop("Unexpected response structure from /v1/responses.\nRaw text:\n", txt)
     }
 
-    # If response is the normal chat envelope, extract model content as JSON
-    if (!is.null(parsed$choices)) {
-      content <- parsed$choices[[1]]$message$content
-      content <- str_replace_all(content, "^\\s*```(json)?\\s*|\\s*```\\s*$", "")
-      parsed  <- tryCatch(
-        jsonlite::fromJSON(content, simplifyVector = FALSE),
-        error = function(e) NULL
-      )
-    }
+    # text from the model
+    content_list <- parsed_resp$output[[1]]$content[[1]]
+    model_text   <- content_list$text %||% ""
+
+    model_text_clean <- stringr::str_replace_all(
+      model_text,
+      "^\\s*```(json)?\\s*|\\s*```\\s*$",
+      ""
+    )
+
+    parsed <- tryCatch(
+      jsonlite::fromJSON(model_text_clean, simplifyVector = FALSE),
+      error = function(e) NULL
+    )
 
     if (is.null(parsed) || !is.list(parsed)) {
-      stop("LLM did not return valid JSON payload.\nRaw text:\n", txt)
+      stop("LLM did not return valid JSON payload.\nRaw content:\n", model_text)
     }
 
     for (j in seq_along(parsed)) {
       item <- parsed[[j]]
       lab  <- as.character(item$label %||% NA)
 
-      # Guardrail: keep only allowed labels, else fallback
       if (!(lab %in% labels)) lab <- "Other neoplasms"
 
       i_global <- idxs[j]
@@ -375,12 +317,13 @@ llm_normalize_conditions_one <- function(
     }
   }
 
-  tibble(
+  tibble::tibble(
     row = idx_keep,
     input = conditions_keep,
-    Condition_clean = map_chr(results, ~ .x$label %||% "Other neoplasms")
+    Condition_clean = purrr::map_chr(results, ~ .x$label %||% "Other neoplasms")
   )
 }
+
 ```
 
 ## ----------------------------------------------------------
@@ -388,12 +331,13 @@ llm_normalize_conditions_one <- function(
 ## ----------------------------------------------------------
 
 ```{r}
-clean_map100 <- llm_normalize_conditions_one(clean_df100$Condition)
+clean_df <- llm_normalize_conditions_one(clean_df$Condition)
 
 # Optional: quick peek
-head(clean_map100)
+head(clean_df)
 
 ```
+
 ```{r}
 clean_counts <- clean_map100 %>%
   count(Condition_clean, sort = TRUE)

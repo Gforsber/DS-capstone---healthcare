@@ -1,0 +1,26 @@
+---
+title: "Clean 2.0"
+output: html_document
+date: "2025-12-08"
+---
+
+```{r setup, include=FALSE}
+library(ellmer);
+library(tidyverse);
+library(furrr); # for parallel map
+library(kableExtra);
+library(jsonlite)
+library(dplyr)
+library(readr)
+library(httr2)
+library(purrr)
+library(tibble)
+library(stringr)
+```
+
+## R Markdown
+
+```{r}
+LLM <- read_csv("../Data/LLM.csv")
+```
+

@@ -193,3 +193,97 @@ ggsave("../Result/trials_vs_incidence.png", p_inc,    width = 8, height = 5, dpi
 
 ```
 
+```{r}
+
+## 1. DALYs by cancer type (latest year, global, both sexes, all ages) ----
+gbd_dalys <- gbd_mertic %>%
+  filter(
+    measure  == "DALYs (Disability-Adjusted Life Years)",
+    location == "Global",
+    sex      == "Both",
+    age      == "All ages",
+    metric   == "Number"
+  ) %>%
+  group_by(cause) %>%
+  filter(year == max(year)) %>%
+  ungroup() %>%
+  select(cause, dalys = val)
+
+## 2. Clinical trials by cancer type ----
+clinic_sum <- clinic %>%
+  filter(!is.na(Condition_clean)) %>%
+  group_by(Condition_clean) %>%
+  summarise(
+    n_trials      = n_distinct(TrialID),
+    total_target  = sum(target_total, na.rm = TRUE),
+    .groups = "drop"
+  )
+
+## 3. Join DALYs + trials ----
+df <- gbd_dalys %>%
+  inner_join(clinic_sum, by = c("cause" = "Condition_clean"))
+
+## 4. Order cancers by DALYs (like the example figure) ----
+df <- df %>%
+  arrange(dalys) %>%
+  mutate(cause = factor(cause, levels = cause))
+
+df2 <- df %>%
+  mutate(
+    dalys_mill = dalys / 1e6,       # DALYs → millions
+    #trials_k   = n_trials           # If you want trials as raw counts
+    trials_k   = n_trials / 1e2   # uncomment if you prefer thousands
+  ) %>%
+  arrange(dalys_mill) %>%
+  mutate(cause = factor(cause, levels = cause))
+
+## 2. Convert to long format -----------------------------------------
+plot_df <- df2 %>%
+  select(cause, dalys_mill, trials_k) %>%
+  pivot_longer(
+    cols      = -cause,
+    names_to  = "metric",
+    values_to = "value"
+  ) %>%
+  mutate(
+    value_signed = ifelse(metric == "dalys_mill", -value, value),
+    metric = recode(
+      metric,
+      dalys_mill = "DALYs (millions)",
+      trials_k   = "Trials (hundreds)"
+    )
+  )
+
+## 3. Plot -------------------------------------------------------------
+p_bar <- ggplot(plot_df, aes(x = value_signed, y = cause, fill = metric)) +
+  geom_col(width = 0.8) +
+  scale_x_continuous(
+    breaks = pretty_breaks(10),
+    labels = function(x) comma(abs(x), accuracy = 1)
+  ) +
+  scale_fill_manual(
+    values = c(
+      "DALYs (millions)" = "grey50",
+      "Trials (hundreds)"   = "#1f78b4"
+    ),
+    name = NULL
+  ) +
+  labs(
+    x = NULL,
+    y = NULL,
+    title = "DALYs vs clinical trial activity by cancer type"
+  ) +
+  coord_cartesian(expand = FALSE) +
+  theme_minimal(base_size = 12) +
+  theme(
+    axis.text.y        = element_text(size = 10),
+    legend.position    = "right",
+    panel.grid.major.y = element_blank()
+  )
+
+p_bar
+
+ggsave("../Result/DALYs vs clinical trial bar.png",p_bar,    width = 10, height = 5, dpi = 300)
+
+```
+

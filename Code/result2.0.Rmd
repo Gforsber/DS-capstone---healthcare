@@ -192,6 +192,7 @@ ggsave("../Result/trials_vs_incidence.png", p_inc,    width = 8, height = 5, dpi
 
 
 ```
+## Bar
 
 ```{r}
 
@@ -284,6 +285,460 @@ p_bar <- ggplot(plot_df, aes(x = value_signed, y = cause, fill = metric)) +
 p_bar
 
 ggsave("../Result/DALYs vs clinical trial bar.png",p_bar,    width = 10, height = 5, dpi = 300)
+
+```
+
+## Country
+```{r}
+country_rank <- clinic %>%
+  filter(!is.na(Countries_clean)) %>%                    # keep rows with countries
+  separate_rows(Countries_clean, sep = ";") %>%          # one row per country–trial
+  mutate(Countries_clean = str_trim(Countries_clean)) %>%# trim spaces
+  group_by(Countries_clean) %>%
+  summarise(
+    n_trials     = n_distinct(TrialID),                  # how many trials
+    total_target = sum(target_total, na.rm = TRUE),      # optional: total sample size
+    .groups = "drop"
+  ) %>%
+  arrange(desc(n_trials)) %>%
+  mutate(rank = row_number())
+
+country_rank
+```
+```{r}
+gbd_country <- read_csv("../Data/gbd_country.csv")
+glimpse(gbd_country)
+```
+```{r}
+
+measures_keep <- c("Deaths",
+                   "DALYs (Disability-Adjusted Life Years)",
+                   "Prevalence",
+                   "Incidence")
+
+gbd_country_neoplasm <- gbd_country %>%
+  filter(
+    cause    == "Neoplasms",
+    sex      == "Both",
+    age      == "All ages",
+    metric   == "Number",
+    measure  %in% measures_keep
+  ) %>%
+  group_by(location, measure) %>%
+  filter(year == max(year)) %>%        # latest year per country+measure
+  ungroup() %>%
+  rename(
+    country_gbd = location,
+    burden      = val
+  )
+
+```
+
+```{r}
+clinic_country <- clinic %>%
+  filter(!is.na(Countries_clean)) %>%
+  separate_rows(Countries_clean, sep = ";") %>%
+  mutate(country_trial = str_trim(Countries_clean)) %>%
+  group_by(country_trial) %>%
+  summarise(
+    n_trials     = n_distinct(TrialID),
+    total_target = sum(target_total, na.rm = TRUE),
+    .groups = "drop"
+  )
+
+```
+
+```{r}
+standardize_country <- function(x) {
+  x <- str_trim(x)
+  x_low <- tolower(x)
+  dplyr::recode(
+    x_low,
+    "united states of america" = "united states",
+    .default = x_low
+  )
+}
+
+gbd_country_neoplasm <- gbd_country_neoplasm %>%
+  mutate(country_std = str_to_title(standardize_country(country_gbd)))
+
+clinic_country <- clinic_country %>%
+  mutate(country_std = str_to_title(standardize_country(country_trial)))
+
+```
+
+```{r}
+country_trials_burden <- gbd_country_neoplasm %>%
+  inner_join(
+    clinic_country,
+    by = "country_std"
+  )
+
+```
+
+```{r}
+country_trials_burden %>%
+  group_by(measure) %>%
+  summarise(
+    corr_spearman = cor(burden, n_trials,
+                        use = "complete.obs",
+                        method = "spearman")
+  )
+
+```
+
+```{r}
+library(ggplot2)
+
+country_trials_burden %>%
+  filter(measure == "DALYs (Disability-Adjusted Life Years)") %>%
+  ggplot(aes(x = burden, y = n_trials, label = country_std)) +
+  geom_point() +
+  geom_text(check_overlap = TRUE, vjust = -0.5, size = 3) +
+  scale_x_log10() +
+  scale_y_log10() +
+  labs(
+    x = "Neoplasm DALYs (log scale)",
+    y = "Number of clinical trials (log scale)",
+    title = "Country-level clinical trials vs neoplasm DALY burden"
+  ) +
+  theme_minimal()
+
+```
+```{r}
+
+measures_keep <- "DALYs (Disability-Adjusted Life Years)"
+
+gbd_cn <- gbd_country %>%
+  filter(
+    cause    == "Neoplasms",
+    sex      == "Both",
+    age      == "All ages",
+    metric   == "Number",
+    measure  %in% measures_keep
+  ) %>%
+  group_by(location, measure) %>%
+  filter(year == max(year)) %>%     # latest year
+  ungroup() %>%
+  rename(
+    country_gbd = location,
+    dalys       = val
+  )
+
+# 2. --- Prepare clinical trials dataset (explode countries) ----------------
+
+clinic_cn <- clinic %>%
+  filter(!is.na(Countries_clean)) %>%
+  separate_rows(Countries_clean, sep = ";") %>%
+  mutate(country_trial = str_trim(Countries_clean)) %>%
+  group_by(country_trial) %>%
+  summarise(
+    n_trials = n_distinct(TrialID),
+    total_target = sum(target_total, na.rm = TRUE),
+    .groups = "drop"
+  )
+
+# Optional harmonization for name differences
+fix_country <- function(x) {
+  x_low <- tolower(trimws(x))
+  recode(
+    x_low,
+    "united states of america" = "united states",
+    "usa" = "united states",
+    "uk"  = "united kingdom",
+    .default = x_low
+  )
+}
+
+gbd_cn <- gbd_cn %>%
+  mutate(country_std = str_to_title(fix_country(country_gbd)))
+
+clinic_cn <- clinic_cn %>%
+  mutate(country_std = str_to_title(fix_country(country_trial)))
+
+write.csv(clinic_cn,"../Data/clinic_cn.csv")
+
+write.csv(gbd_cn,"../Data/gbd_cn.csv")
+# 3. --- Merge burden + trials ---------------------------------------------
+
+country_df <- gbd_cn %>%
+  inner_join(clinic_cn, by = "country_std")
+
+# 4. --- OUTPUT THE SCATTER PLOT ------------------------------------------
+
+p1 <- ggplot(country_df, aes(x = dalys, y = n_trials, label = country_std)) +
+  geom_point(color = "#1f78b4", size = 3, alpha = 0.8) +
+  geom_text_repel(size = 3, max.overlaps = Inf) +
+  scale_x_log10(labels = comma) +
+  scale_y_log10(labels = comma) +
+  labs(
+    title = "Country-level Clinical Trial Activity vs Neoplasm DALY Burden",
+    x     = "Neoplasm DALYs (log scale)",
+    y     = "Number of Clinical Trials Involving the Country (log scale)"
+  ) +
+  theme_minimal(base_size = 13)
+
+ggsave("../Result/Country-level Clinical Trial.png",p1,width = 15, height = 8, dpi = 600)
+```
+
+### China
+
+```{r}
+China <- read_csv("../Data/China.csv")
+glimpse(China)
+```
+
+```{r}
+China_clean <- China %>%
+  filter(
+    sex == "Both",
+    age == "All ages",
+    metric == "Number"    # raw burden, not rates
+  )
+```
+
+```{r}
+China_latest <- China_clean %>%
+  group_by(cause, measure) %>%
+  filter(year == max(year)) %>%
+  summarise(
+    burden = val,
+    .groups = "drop"
+  )
+China_deaths <- China_latest %>% filter(measure == "Deaths")
+China_dalys  <- China_latest %>% filter(measure == "DALYs (Disability-Adjusted Life Years)")
+China_prev   <- China_latest %>% filter(measure == "Prevalence")
+China_inc    <- China_latest %>% filter(measure == "Incidence")
+
+```
+
+```{r}
+China_dalys_ranked <- China_dalys %>%
+  arrange(desc(burden)) %>%
+  mutate(rank = row_number())
+```
+
+```{r}
+library(ggplot2)
+
+ggplot(China_dalys, aes(x = burden, y = reorder(cause, burden))) +
+  geom_col(fill = "darkred") +
+  labs(
+    title = "China Cancer Burden by DALYs (Latest Available Year)",
+    x = "DALYs (absolute count)",
+    y = "Cancer type"
+  ) +
+  scale_x_continuous(labels = scales::comma) +
+  theme_minimal(base_size = 12)
+```
+```{r}
+china_dalys <- China %>%
+  filter(
+    sex == "Both",
+    age == "All ages",
+    metric == "Number",
+    measure == "DALYs (Disability-Adjusted Life Years)"
+  ) %>%
+  group_by(cause) %>%
+  filter(year == max(year)) %>%
+  ungroup() %>%
+  rename(dalys_china = val)
+
+```
+
+```{r}
+trials_china <- clinic %>%
+  filter(!is.na(Countries_clean)) %>%
+  # keep trials that include China as one of the countries
+  filter(str_detect(Countries_clean, "China")) %>%
+  filter(!is.na(Condition_clean)) %>%
+  group_by(Condition_clean) %>%
+  summarise(
+    n_trials_china     = n_distinct(TrialID),
+    total_target_china = sum(target_total, na.rm = TRUE),
+    .groups = "drop"
+  )
+
+
+```
+
+```{r}
+china_burden_trials <- china_dalys %>%
+  inner_join(trials_china,
+             by = c("cause" = "Condition_clean")) %>%
+  mutate(
+    # shares among cancers within China
+    burden_share = dalys_china / sum(dalys_china),
+    trial_share  = n_trials_china / sum(n_trials_china),
+    # log2 ratio: >0 = over-researched, <0 = under-researched
+    log2_ratio   = log2(trial_share / burden_share),
+    mismatch     = case_when(
+      log2_ratio >  0 ~ "Over-represented in trials",
+      log2_ratio <  0 ~ "Under-represented in trials",
+      TRUE            ~ "Proportional"
+    )
+  )
+
+```
+
+```{r}
+ggplot(china_burden_trials,
+       aes(x = burden_share, y = trial_share, label = cause)) +
+  geom_abline(slope = 1, intercept = 0, linetype = "dashed", color = "grey60") +
+  geom_point(aes(color = mismatch, size = n_trials_china), alpha = 0.8) +
+  ggrepel::geom_text_repel(size = 3, max.overlaps = Inf) +
+  scale_x_log10(labels = percent_format(accuracy = 0.1)) +
+  scale_y_log10(labels = percent_format(accuracy = 0.1)) +
+  scale_color_manual(
+    values = c(
+      "Under-represented in trials" = "red",
+      "Over-represented in trials"  = "darkgreen",
+      "Proportional"                = "grey40"
+    ),
+    name = NULL
+  ) +
+  labs(
+    title = "China: Clinical trial activity vs DALY burden by cancer type",
+    x = "Share of China cancer DALY burden",
+    y = "Share of China cancer clinical trials (that include China)"
+  ) +
+  theme_minimal(base_size = 11) +
+  theme(legend.position = "bottom")
+
+```
+```{r}
+
+barbell_data <- china_burden_trials %>%
+  mutate(
+    burden = burden_share,
+    trial  = trial_share
+  ) %>%
+  select(cause, burden, trial) %>%
+  pivot_longer(cols = c(burden, trial),
+               names_to = "type",
+               values_to = "value")
+
+ggplot(barbell_data,
+       aes(x = value, y = cause, color = type)) +
+  geom_line(aes(group = cause), linewidth = 1) +
+  geom_point(size = 3) +
+  scale_x_log10(labels = scales::percent_format()) +
+  labs(
+    title = "China: Burden vs Trials Comparison",
+    x = "Share",
+    y = "Cancer type"
+  ) +
+  theme_minimal()
+
+
+
+
+```
+```{r}
+china_burden_trials %>%
+  arrange(log2_ratio) %>%
+  ggplot(aes(x = log2_ratio, y = reorder(cause, log2_ratio))) +
+  geom_segment(aes(xend = 0, yend = cause),
+               color = "grey60", linewidth = 1) +
+  geom_point(aes(color = mismatch), size = 5) +
+  scale_color_manual(values = c("red","darkgreen")) +
+  labs(
+    title = "China: Under- vs Over-Representation of Cancer Trials",
+    x = "Imbalance (log2 ratio)",
+    y = "Cancer type"
+  ) +
+  theme_minimal()
+
+```
+
+```{r}
+china_diverge <- china_burden_trials %>%
+  mutate(
+    burden_val = dalys_china / 1e6,       # China DALYs in millions
+    trial_val  = n_trials_china/ 1e2
+  ) %>%
+  arrange(burden_val) %>%
+  mutate(cause = factor(cause, levels = cause))
+
+plot_df <- china_diverge %>%
+  select(cause, burden_val, trial_val) %>%
+  pivot_longer(cols = -cause,
+               names_to = "metric",
+               values_to = "value") %>%
+  mutate(
+    value_signed = ifelse(metric == "burden_val", -value, value),
+    metric = recode(
+      metric,
+      burden_val = "DALYs (millions)",
+      trial_val  = "Trials"
+    )
+  )
+
+ggplot(plot_df, aes(x = value_signed, y = cause, fill = metric)) +
+  geom_col(width = 0.8) +
+  scale_x_continuous(labels = ~abs(.)) +
+  labs(
+    title = "China: DALYs vs Clinical Trials",
+    x = NULL, y = NULL
+  ) +
+  theme_minimal()
+
+```
+```{r}
+library(fmsb)
+
+library(dplyr)
+library(scales)
+
+# pick top 5 cancers by China DALY burden
+china_top5 <- china_burden_trials %>%
+  arrange(desc(dalys_china)) %>%
+  slice_head(n = 5) %>%
+  mutate(
+    burden_norm = burden_share / max(burden_share),
+    trial_norm  = trial_share  / max(trial_share),
+    mis_norm    = (trial_share / burden_share) / 
+                  max(trial_share / burden_share)
+  ) %>%
+  select(cause, burden_norm, trial_norm, mis_norm)
+
+
+
+```
+
+```{r}
+max_row <- data.frame(burden_norm = 1, trial_norm = 1, mis_norm = 1)
+min_row <- data.frame(burden_norm = 0, trial_norm = 0, mis_norm = 0)
+
+radar_df <- rbind(
+  max_row,
+  min_row,
+  as.data.frame(china_top5[, -1])  # drop 'cause' column
+)
+
+rownames(radar_df) <- c("max", "min", china_top5$cause)
+```
+
+```{r}
+radarchart(
+  radar_df,
+  axistype = 1,
+  pcol = rainbow(nrow(radar_df) - 2),
+  pfcol = scales::alpha(rainbow(nrow(radar_df) - 2), 0.3),
+  plwd = 2,
+  cglcol = "grey",
+  cglty = 1,
+  axislabcol = "grey20",
+  caxislabels = c("0", "0.25", "0.5", "0.75", "1"),
+  cglwd = 0.8,
+  vlcex = 0.8
+)
+legend("topright",
+       legend = china_top5$cause,
+       col = rainbow(nrow(radar_df) - 2),
+       pch = 15,
+       bty = "n",
+       cex = 0.7)
 
 ```
 

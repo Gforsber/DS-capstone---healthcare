@@ -27,6 +27,7 @@ unique(cancer$cause)
 ```{r}
 ctg100 <- head(ctg_studies, 100)
 
+
 ```
 
 ```{r}

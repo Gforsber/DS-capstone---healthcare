@@ -1,0 +1,247 @@
+---
+title: "Clean 2.0"
+output: html_document
+date: "2025-12-08"
+---
+
+```{r setup, include=FALSE}
+library(ellmer);
+library(tidyverse);
+library(furrr); # for parallel map
+library(kableExtra);
+library(jsonlite)
+library(dplyr)
+library(readr)
+library(httr2)
+library(purrr)
+library(tibble)
+library(stringr)
+```
+
+## R Markdown
+
+```{r}
+LLM <- read_csv("../Data/LLM.csv")
+glimpse(LLM)
+```
+```{r}
+clean_df <- LLM %>%
+  filter(!is.na(Condition_clean)) %>%
+  filter(!is.na(Condition))
+```
+
+```{r}
+clean_df %>%
+  slice(1:1000) %>%
+  distinct(`Countries`)
+```
+```{r}
+clean_df <- clean_df %>%
+  mutate(
+    # Convert to UTF-8 to avoid encoding crashes
+    target_utf8 = iconv(`Target size`, from = "", to = "UTF-8"),
+    
+    # Extract ALL numbers from each row
+    numbers = str_extract_all(target_utf8, "\\d+"),
+    
+    # Convert extracted numbers to numeric
+    numbers = map(numbers, ~ as.numeric(.x)),
+    
+    # Sum numbers; if no numbers → NA
+    target_total = map_dbl(numbers, ~ ifelse(length(.x) == 0, NA_real_, sum(.x)))
+  )
+```
+
+```{r}
+library(dplyr)
+library(stringr)
+
+clean_phase <- function(x) {
+  x_raw <- x
+  
+  x <- tolower(x_raw)
+  x <- str_replace_all(x, "[\r\n]", " ")   # remove line breaks
+  x <- str_squish(x)                       # collapse extra spaces
+  
+  case_when(
+    # True missing
+    is.na(x_raw) ~ NA_character_,
+    
+    # Not applicable / unspecified
+    x %in% c("na", "n/a") ~ NA_character_,
+    str_detect(x, "not applicable") ~ "Not applicable",
+    str_detect(x, "not specified") ~ "Not specified",
+    str_detect(x, "pilot clinical trial") ~ "Not specified",
+    
+    # EMA-style multi-phase with yes/no: pick highest phase with "yes"
+    str_detect(x, "phase iv") & str_detect(x, "phase iv\\):\\s*yes") ~ "Phase 4",
+    str_detect(x, "phase iii") & str_detect(x, "phase iii\\):\\s*yes") ~ "Phase 3",
+    str_detect(x, "phase ii") & str_detect(x, "phase ii\\):\\s*yes") ~ "Phase 2",
+    str_detect(x, "phase i")  & str_detect(x, "phase i\\):\\s*yes")  ~ "Phase 1",
+    
+    # Combined phases: take the highest one
+    str_detect(x, "phase iii/iv|3/4") ~ "Phase 4",
+    str_detect(x, "phase ii/iii|2/3") ~ "Phase 3",
+    str_detect(x, "phase i/ii|1/2")   ~ "Phase 2",
+    
+    # Any mention of Phase 4 / IV
+    str_detect(x, "phase iv") | str_detect(x, "phase 4") ~ "Phase 4",
+    
+    # Any mention of Phase 3 / III
+    str_detect(x, "phase iii") | str_detect(x, "phase 3") ~ "Phase 3",
+    
+    # Any mention of Phase 2 / II
+    str_detect(x, "phase ii") | str_detect(x, "phase 2") ~ "Phase 2",
+    
+    # Any mention of Phase 1 / I
+    str_detect(x, "phase i") | str_detect(x, "phase 1") ~ "Phase 1",
+    
+    # Pure numeric codes or slightly messy ones
+    x %in% c("1") ~ "Phase 1",
+    x %in% c("2", "2-jan") ~ "Phase 2",
+    x %in% c("3") ~ "Phase 3",
+    x %in% c("4") ~ "Phase 4",
+    
+    # Fallback: unknown / can't classify
+    TRUE ~ NA_character_
+  )
+}
+
+# Apply to your data frame
+clean_df <- clean_df %>%
+  mutate(Phase_clean = clean_phase(Phase))
+
+```
+
+```{r}
+clean_gender <- function(x) {
+  
+  # Convert to lowercase, remove HTML breaks, normalize spaces
+  g <- tolower(x)
+  g <- str_replace_all(g, "<br>", " ")
+  g <- str_squish(g)
+  
+  case_when(
+    is.na(x) ~ NA_character_,
+    
+    # Both genders
+    g %in% c("all", "both", "male and female", "both males and females") ~ "Both",
+    
+    # Single-letter shorthand
+    g %in% c("m") ~ "Male",
+    g %in% c("f") ~ "Female",
+    
+    # Male plural
+    g %in% c("males") ~ "Male",
+    
+    # HTML / plain: female: yes, male: yes → Both
+    str_detect(g, "female: yes") & str_detect(g, "male: yes") ~ "Both",
+    
+    # female yes, male no → Female only
+    str_detect(g, "female: yes") & str_detect(g, "male: no") ~ "Female",
+    
+    # female no, male yes → Male only
+    str_detect(g, "female: no") & str_detect(g, "male: yes") ~ "Male",
+    
+    # Only female literal
+    g == "female" ~ "Female",
+    
+    # Only male literal
+    g == "male" ~ "Male",
+    
+    # Hyphen or empty strings → NA
+    g %in% c("-", "") ~ NA_character_,
+    
+    TRUE ~ NA_character_
+  )
+}
+
+# Apply to your data frame
+clean_df <- clean_df %>%
+  mutate(Gender_clean = clean_gender(`Inclusion gender`))
+
+```
+```{r}
+clean_country_string <- function(x) {
+  # Handle true missing
+  if (is.na(x)) return(NA_character_)
+  
+  # Normalize encoding
+  x <- iconv(x, from = "", to = "UTF-8")
+  
+  # Lowercase working copy
+  x_low <- tolower(x)
+  x_low <- str_squish(x_low)
+  
+  # If whole thing is NA-like
+  if (x_low %in% c("", "na", "not applicable")) return(NA_character_)
+  
+  # Fix specific concatenation errors seen in your data
+  x <- str_replace_all(x, c(
+    "TanzaniaBrazil"                = "Tanzania;Brazil",
+    "United StatesCanada"           = "United States;Canada",
+    "United StatesIreland"          = "United States;Ireland",
+    "NigeriaUnited States Cameroon" = "Nigeria;United States;Cameroon",
+    "Ital Taiwan"                   = "Italy;Taiwan"
+  ))
+  
+  # Split on ;
+  parts <- str_split(x, ";")[[1]]
+  parts <- str_trim(parts)
+  parts <- parts[parts != ""]
+  
+  if (length(parts) == 0) return(NA_character_)
+  
+  parts_low <- tolower(parts)
+  
+  # Drop in-string "not applicable"/"na" tokens
+  keep_idx <- !parts_low %in% c("na", "not applicable")
+  parts_low <- parts_low[keep_idx]
+  
+  if (length(parts_low) == 0) return(NA_character_)
+  
+  # Normalize country names
+  norm <- case_when(
+    # United States
+    parts_low %in% c("usa", "us", "u.s.a", "united states", "united states of america") ~ "United States",
+    
+    # United Kingdom and home nations
+    parts_low %in% c("uk", "u.k.", "united kingdom",
+                     "england", "scotland", "wales", "northern ireland") ~ "United Kingdom",
+    
+    # China
+    parts_low %in% c("china", "china ", "china (mainland)", "prc", "people's republic of china") ~ "China",
+    
+    # Iran
+    parts_low %in% c("iran (islamic republic of)", "iran") ~ "Iran",
+    
+    # Czechia
+    parts_low %in% c("czechia", "czech republic") ~ "Czechia",
+    
+    # Generic: title case
+    TRUE ~ str_to_title(parts_low)
+  )
+  
+  # Deduplicate and drop empties
+  norm <- unique(norm)
+  norm <- norm[!is.na(norm) & norm != ""]
+  
+  if (length(norm) == 0) return(NA_character_)
+  
+  paste(norm, collapse = ";")
+}
+
+# Apply to your data frame
+clean_df <- clean_df %>%
+  mutate(Countries_clean = map_chr(Countries, clean_country_string))
+```
+
+```{r}
+clean_df <- clean_df %>%
+  select(-target_utf8, -numbers, -row, -input, -...2 , -...1)
+```
+
+```{r}
+write.csv(clean_df,"clinic2.0.csv")
+```
+

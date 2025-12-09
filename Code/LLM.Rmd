@@ -1,0 +1,352 @@
+---
+title: "LLM2"
+output: html_document
+date: "2025-12-02"
+---
+
+```{r setup, include=FALSE}
+library(ellmer);
+library(tidyverse);
+library(furrr); # for parallel map
+library(kableExtra);
+library(jsonlite)
+library(dplyr)
+library(readr)
+library(httr2)
+library(purrr)
+library(tibble)
+library(stringr)
+library(stringi)
+```
+
+
+```{r}
+LLMRaw <- read_csv("../Data/LLMRaw.csv")
+
+```
+
+```{r}
+clean_df <- LLMRaw %>%
+  filter(!str_detect(tolower(`Study type`), "observational"))
+clean_df <- clean_df %>%
+  mutate(`Recruitment Status` = trimws(`Recruitment Status`)) %>%
+  filter(tolower(`Recruitment Status`) != "not recruiting")
+
+clean_df100 <- head(clean_df,100)
+```
+
+```{r}
+bad_idx <- which(!stri_enc_isutf8(clean_df$Condition))
+bad_idx
+```
+```{r}
+clean_df_utf8 <- clean_df[-bad_idx, ]
+```
+
+
+```{r}
+Sys.setenv(OPENAI_API_KEY = "")
+```
+
+## Test
+```{r}
+allowed_labels <- c(
+  "Soft tissue and other extraosseous sarcomas",
+  "Malignant neoplasm of bone and articular cartilage",
+  "Neuroblastoma and other peripheral nervous cell tumors",
+  "Esophageal cancer",
+  "Eye cancer",
+  "Stomach cancer",
+  "Multiple myeloma",
+  "Leukemia",
+  "Other malignant neoplasms",
+  "Other neoplasms",
+  "Breast cancer",
+  "Cervical cancer",
+  "Uterine cancer",
+  "Prostate cancer",
+  "Colon and rectum cancer",
+  "Lip and oral cavity cancer",
+  "Nasopharynx cancer",
+  "Other pharynx cancer",
+  "Gallbladder and biliary tract cancer",
+  "Pancreatic cancer",
+  "Malignant skin melanoma",
+  "Non-melanoma skin cancer",
+  "Ovarian cancer",
+  "Testicular cancer",
+  "Kidney cancer",
+  "Bladder cancer",
+  "Brain and central nervous system cancer",
+  "Thyroid cancer",
+  "Mesothelioma",
+  "Hodgkin lymphoma",
+  "Non-Hodgkin lymphoma",
+  "Liver cancer",
+  "Larynx cancer",
+  "Tracheal, bronchus, and lung cancer"
+)
+
+```
+
+```{r}
+`%||%` <- function(x, y) if (is.null(x)) y else x
+
+chunk_vec <- function(x, n) {
+  if (length(x) == 0L) return(list())
+  split(x, ceiling(seq_along(x) / n))
+}
+
+perform_with_retry <- function(req, max_retries = 5, base_delay = 1) {
+  attempt <- 1L
+  repeat {
+    resp <- req_perform(req)
+    status <- resp_status(resp)
+
+    # success
+    if (status < 400) return(resp)
+
+    body_txt <- resp_body_string(resp)
+
+    # retry on transient errors
+    if (status %in% c(429, 500, 502, 503, 504) && attempt < max_retries) {
+      delay <- base_delay * 2^(attempt - 1L)
+      message(
+        "OpenAI HTTP ", status, " (attempt ", attempt, "/", max_retries,
+        "). Retrying in ", delay, "s.\nBody: ", body_txt
+      )
+      Sys.sleep(delay)
+      attempt <- attempt + 1L
+    } else {
+      stop(
+        "OpenAI API HTTP error: ", status, " ", resp_status_desc(resp),
+        "\nResponse body:\n", body_txt,
+        call. = FALSE
+      )
+    }
+  }
+}
+
+is_surgery_focused_condition <- function(x) {
+  str_detect(
+    x,
+    regex(
+      paste(
+        c(
+          "surgery", "surgical", "operat(ion|ive)",
+          "resection", "debulking",
+          "post\\s*-?operative", "peri\\s*-?operative",
+          # common named procedures
+          "nephrectomy", "gastrectomy", "colectomy", "hemicolectomy",
+          "lobectomy", "mastectomy", "hysterectomy", "prostatectomy",
+          "arthroplasty", "bypass"
+        ),
+        collapse = "|"
+      ),
+      ignore_case = TRUE
+    )
+  )
+}
+##############################
+## Unified LLM function
+##############################
+
+llm_normalize_conditions_one <- function(
+  conditions,
+  labels = allowed_labels,
+  model = "gpt-4.1-mini",
+  temperature = 0
+) {
+  api_key <- Sys.getenv("OPENAI_API_KEY")
+  if (identical(api_key, "")) {
+    stop("Set OPENAI_API_KEY via Sys.setenv('OPENAI_API_KEY' = \"sk-...\").", call. = FALSE)
+  }
+
+  base_url <- "https://api.openai.com/v1/chat/completions"
+
+  conditions <- as.character(conditions %||% "")
+  orig_idx   <- seq_along(conditions)
+
+  # 1. Drop surgery-focused rows BEFORE calling the LLM
+  surg_mask       <- is_surgery_focused_condition(conditions)
+  conditions_keep <- conditions[!surg_mask]
+  idx_keep        <- orig_idx[!surg_mask]
+
+  if (length(conditions_keep) == 0L) {
+    return(tibble(
+      row = integer(0),
+      input = character(0),
+      Condition_clean = character(0)
+    ))
+  }
+
+  # 2. System prompt – UPDATED to fix "Other neoplasms" overuse
+  system_prompt <- paste0(
+    "You are a strict classifier. For each clinical trial condition string, ",
+    "choose EXACTLY ONE label from the ALLOWED LABELS.\n\n",
+
+    "ALLOWED LABELS:\n- ",
+    paste(labels, collapse = "\n- "),
+    "\n\n",
+
+    "OUTPUT:\n",
+    "- Respond with the label text ONLY (no quotes, no extra words, no punctuation).\n\n",
+
+    "CRITICAL RULES ABOUT 'OTHER NEOPLASMS':\n",
+    "1) NEVER use 'Other neoplasms' if the string contains any of these words:\n",
+    "   'cancer', 'tumor', 'tumour', 'neoplasm', 'carcinoma', 'sarcoma',\n",
+    "   'lymphoma', 'leukemia', 'myeloma', 'solid tumor', 'solid tumour'.\n",
+    "2) NEVER use 'Other neoplasms' if the string clearly names an organ site such as:\n",
+    "   lung, bronchus, trachea, breast, colon, rectum, colorectal, gastric, stomach,\n",
+    "   liver, pancreas, ovary, ovarian, cervix, cervical, uterus, uterine, endometrial,\n",
+    "   prostate, kidney, renal, bladder, brain, CNS, glioblastoma, thyroid, skin,\n",
+    "   nasopharynx, larynx, oral cavity, lip, gallbladder, biliary, testis, testicular, eye.\n",
+    "   In these cases, choose the corresponding organ-site label.\n",
+    "3) Use 'Neoplasms' (generic) when there is clear cancer/neoplasm context but no\n",
+    "   specific organ site is identifiable.\n",
+    "4) ONLY use 'Other neoplasms' when there is NO clear cancer/neoplasm context at all\n",
+    "   and no obvious organ site or common cancer precursor.\n\n",
+
+    "MULTI-SITE / LIST RULE:\n",
+    "- If multiple organ sites are present (e.g., 'lung, breast, colorectal cancer'),\n",
+    "  choose the FIRST organ site mentioned (here: lung → 'Tracheal, bronchus, and lung cancer').\n\n",
+
+    "EXAMPLES (these are VERY IMPORTANT and override your default habits):\n",
+    "- 'Lung cancer' → 'Tracheal, bronchus, and lung cancer'\n",
+    "- 'lung cancer' → 'Tracheal, bronchus, and lung cancer'\n",
+    "- 'Lung Cancer (NSCLC)' → 'Tracheal, bronchus, and lung cancer'\n",
+    "- 'non-small cell lung cancer (NSCLC)' → 'Tracheal, bronchus, and lung cancer'\n",
+    "- 'Non-Small Cell Lung Cancer' → 'Tracheal, bronchus, and lung cancer'\n",
+    "- 'Small cell lung cancer' → 'Tracheal, bronchus, and lung cancer'\n",
+    "- 'locally advanced or metastatic NSCLC' → 'Tracheal, bronchus, and lung cancer'\n",
+    "- 'Solid tumors (including but not limited to lung cancer, esophageal cancer, gastric cancer, colorectal cancer, liver cancer, pancreatic cancer, cervical cancer, and ovarian cancer).' → 'Tracheal, bronchus, and lung cancer' (first organ site is lung)\n",
+    "- 'Non-Small Cell Lung Cancer;Colorectal Cancer;Breast Cancer;Ovarian Cancer;Endometrial Carcinoma;Head and Neck Squamous Cell Carcinoma' → 'Tracheal, bronchus, and lung cancer' (first organ site is lung)\n",
+    "- 'Cancer' → 'Neoplasms'\n",
+    "- 'cancer.' → 'Neoplasms'\n",
+    "- 'cancer patients' → 'Neoplasms'\n",
+    "- 'Patients with cancer receiving highly or moderately emetogenic chemotherapy...' → 'Neoplasms'\n",
+    "- 'Diet Habits;Cancer Prevention' → 'Neoplasms'\n",
+    "- 'Prevention of lung, breast, and colorectal cancer disease in the healthy at-risk age population <br>Cancer' → 'Tracheal, bronchus, and lung cancer' (first organ site is lung)\n",
+    "- 'Non Small Cell Lung Cancer;Cervical Cancer;Head and Neck Squamous Cell Cancer;Triple Negative Breast Cancer (TNBC);...' → 'Tracheal, bronchus, and lung cancer'\n",
+    "- 'Mental Health Care;Mental Health;Depression Anxiety Disorder' → 'Other neoplasms'\n",
+    "- 'None' → 'Other neoplasms'\n"
+  )
+
+  # 3. Loop over conditions and classify one-by-one
+  out_labels <- character(length(conditions_keep))
+
+  for (i in seq_along(conditions_keep)) {
+    cond <- conditions_keep[i]
+
+    # NA / empty → Other neoplasms
+    if (is.na(cond) || nchar(trimws(cond)) == 0) {
+      out_labels[i] <- "Other neoplasms"
+      next
+    }
+
+    user_prompt <- paste0(
+      "Condition string:\n\"",
+      cond,
+      "\"\n\nChoose EXACTLY ONE label from the allowed list above.\n",
+      "Respond with the label text only."
+    )
+
+    body <- list(
+      model = model,
+      temperature = temperature,
+      messages = list(
+        list(role = "system", content = system_prompt),
+        list(role = "user",   content = user_prompt)
+      )
+    )
+
+    res <- httr::POST(
+      url = base_url,
+      httr::add_headers(
+        Authorization = paste("Bearer", api_key),
+        `Content-Type` = "application/json"
+      ),
+      body = jsonlite::toJSON(body, auto_unbox = TRUE)
+    )
+
+    if (httr::status_code(res) >= 300) {
+      msg <- httr::content(res, as = "text", encoding = "UTF-8")
+      stop(
+        "OpenAI API error (HTTP ", httr::status_code(res),
+        ") on row ", idx_keep[i], ":\n", msg,
+        call. = FALSE
+      )
+    }
+
+    txt    <- httr::content(res, as = "text", encoding = "UTF-8")
+    parsed <- jsonlite::fromJSON(txt, simplifyVector = FALSE)
+
+    resp_text <- parsed$choices[[1]]$message$content %||% ""
+    lab_raw   <- stringr::str_trim(resp_text)
+    lab_raw   <- gsub('^"(.*)"$', "\\1", lab_raw)  # drop quotes if present
+
+    lab <- if (lab_raw %in% labels) lab_raw else "Other neoplasms"
+
+    out_labels[i] <- lab
+    Sys.sleep(0.05)  # small pause to be nice to the API
+  }
+
+  tibble(
+    row = idx_keep,
+    input = conditions_keep,
+    Condition_clean = out_labels
+  )
+}
+```
+
+
+##Run subset
+
+
+```{r}
+clean_df2<- llm_normalize_conditions_one(clean_df_utf8$Condition)
+
+clean_df_utf8 <- clean_df_utf8 %>%
+  mutate(row = dplyr::row_number())
+clean_df_joined <- clean_df_utf8 %>%
+  left_join(clean_df2, by = "row")
+
+write.csv(clean_df_joined,"LLM.csv")
+other_neoplasms
+head(clean_df1)
+
+```
+
+```{r}
+clean_counts <- clean_map100 %>%
+  count(Condition_clean, sort = TRUE)
+
+clean_counts
+```
+
+```{r}
+api_key <- Sys.getenv("OPENAI_API_KEY")
+if (identical(api_key, "")) stop("OPENAI_API_KEY not set")
+
+test_req <- request("https://api.openai.com/v1/chat/completions") |>
+  req_headers(
+    Authorization = paste("Bearer", api_key),
+    `Content-Type` = "application/json"
+  ) |>
+  req_body_json(list(
+    model = "gpt-4.1-mini",
+    messages = list(
+      list(role = "system", content = "You are a test."),
+      list(role = "user",   content = "Say OK.")
+    ),
+    max_tokens = 10
+  )) |>
+  # IMPORTANT: don't auto-throw on 4xx/5xx so we can see the body
+  req_error(is_error = function(resp) FALSE)
+
+test_resp <- req_perform(test_req)
+
+cat("HTTP status:", resp_status(test_resp), resp_status_desc(test_resp), "\n\n")
+cat(resp_body_string(test_resp), "\n")
+```
+

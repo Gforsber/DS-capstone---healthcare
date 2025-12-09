@@ -1,0 +1,289 @@
+---
+title: "Result 2.0"
+output: html_document
+date: "2025-12-08"
+---
+
+```{r cars}
+library(ellmer);
+library(tidyverse);
+library(furrr); # for parallel map
+library(kableExtra);
+library(jsonlite)
+library(dplyr)
+library(readr)
+library(httr2)
+library(purrr)
+library(tibble)
+library(stringr)
+library(scales)
+library(ggpubr)
+library(ggrepel)
+```
+
+
+```{r pressure, echo=FALSE}
+gbd_mertic <- read_csv("../Data/gbd_mertic.csv")
+clinic <- read_csv("../Data/clinic2.0.csv")
+```
+```{r}
+glimpse(gbd_mertic)
+glimpse(clinic)
+
+unique(gbd_mertic$measure)
+```
+```{r}
+library(dplyr)
+library(ggplot2)
+
+## 1. Get latest global cancer deaths by cause ----
+gbd_latest <- gbd_mertic %>%
+  filter(
+    location == "Global",
+    sex == "Both",
+    age == "All ages",
+    metric == "Number",
+    measure == "Deaths"
+  ) %>%
+  group_by(cause) %>%
+  filter(year == max(year)) %>%        # latest year per cause
+  ungroup() %>%
+  select(
+    cause,
+    gbd_year = year,
+    deaths = val
+  )
+
+## 2. Summarise clinical trials by cancer type ----
+clinic_by_cancer <- clinic %>%
+  filter(!is.na(Condition_clean)) %>%  # already cleaned cancer mapping
+  group_by(Condition_clean) %>%
+  summarise(
+    n_trials    = n_distinct(TrialID),
+    total_target = sum(target_total, na.rm = TRUE),
+    .groups = "drop"
+  )
+
+## 3. Join trials with GBD deaths ----
+cancer_joined <- clinic_by_cancer %>%
+  inner_join(gbd_latest, by = c("Condition_clean" = "cause")) %>%
+  mutate(
+    trials_per_100k_deaths = n_trials / (deaths / 1e5),
+    target_per_death       = total_target / deaths
+  )
+
+## Optional: check correlation (Spearman is safer for skewed data)
+cor_trials_deaths <- cor(
+  cancer_joined$deaths,
+  cancer_joined$n_trials,
+  use   = "complete.obs",
+  method = "spearman"
+)
+cor_trials_deaths
+
+```
+```{r}
+ggplot(cancer_joined,
+       aes(x = deaths, y = n_trials, label = Condition_clean)) +
+  geom_point() +
+  geom_text(check_overlap = TRUE, vjust = -0.5, size = 3) +
+  scale_x_log10() +
+  scale_y_log10() +
+  labs(
+    title    = "Clinical trials vs global cancer deaths by cancer type",
+    subtitle = paste0("Latest GBD year: ", paste(unique(cancer_joined$gbd_year), collapse = ", ")),
+    x = "Global deaths (log scale)",
+    y = "Number of clinical trials (log scale)"
+  ) +
+  theme_minimal()
+```
+```{r}
+clinic_by_cancer <- clinic %>%
+  filter(!is.na(Condition_clean)) %>%
+  group_by(Condition_clean) %>%
+  summarise(
+    n_trials     = n_distinct(TrialID),
+    total_target = sum(target_total, na.rm = TRUE),
+    .groups = "drop"
+  ) %>%
+  mutate(trial_share = n_trials / sum(n_trials))
+
+
+## 2. Helper to get GBD burden + join for a given measure ----------
+
+make_joined_df <- function(measure_name) {
+  gbd_latest <- gbd_mertic %>%
+    filter(
+      measure  == measure_name,
+      location == "Global",
+      sex      == "Both",
+      age      == "All ages",
+      metric   == "Number"
+    ) %>%
+    group_by(cause) %>%
+    filter(year == max(year)) %>%
+    ungroup() %>%
+    select(cause, val)
+
+  gbd_latest <- gbd_latest %>%
+    mutate(burden_share = val / sum(val))
+
+  clinic_by_cancer %>%
+    inner_join(gbd_latest, by = c("Condition_clean" = "cause")) %>%
+    mutate(
+      over_rep = trial_share > burden_share   # TRUE = green, FALSE = red
+    )
+}
+
+
+## 3. Helper to make one plot --------------------------------------
+
+make_plot <- function(measure_name, title_suffix) {
+  df <- make_joined_df(measure_name)
+
+  ggplot(df, aes(x = burden_share, y = trial_share)) +
+    geom_abline(slope = 1, intercept = 0,
+                linetype = "dashed", color = "grey50") +
+    geom_point(aes(color = over_rep, size = n_trials), alpha = 0.8) +
+    geom_text_repel(
+      aes(label = Condition_clean),
+      size = 3,
+      max.overlaps = Inf,    # show ALL labels
+      box.padding = 0.3,
+      point.padding = 0.2,
+      segment.color = "grey60"
+    ) +
+    scale_x_log10(labels = scales::percent_format(accuracy = 0.01)) +
+    scale_y_log10(labels = scales::percent_format(accuracy = 0.01)) +
+    scale_color_manual(
+      values = c("FALSE" = "red", "TRUE" = "darkgreen"),
+      labels = c("Underrepresented", "Overrepresented"),
+      name   = NULL
+    ) +
+    labs(
+      x = paste0(title_suffix, " share"),
+      y = "Clinical trial share",
+      title = paste("Clinical trial share vs", title_suffix, "by cancer type")
+    ) +
+    theme_minimal() +
+    theme(
+      legend.position = "bottom",
+      plot.title = element_text(face = "bold")
+    )
+}
+
+
+## 4. Build each plot INDIVIDUALLY --------------------------------
+
+p_deaths <- make_plot("Deaths", "death")
+p_dalys  <- make_plot("DALYs (Disability-Adjusted Life Years)", "DALY")
+p_prev   <- make_plot("Prevalence", "prevalence")
+p_inc    <- make_plot("Incidence", "incidence")
+
+p_deaths
+p_dalys
+p_prev
+p_inc
+
+ggsave("../Result/trials_vs_deaths.png",    p_deaths, width = 8, height = 5, dpi = 300)
+ggsave("../Result/trials_vs_dalys.png",     p_dalys,  width = 8, height = 5, dpi = 300)
+ggsave("../Result/trials_vs_prevalence.png",p_prev,   width = 8, height = 5, dpi = 300)
+ggsave("../Result/trials_vs_incidence.png", p_inc,    width = 8, height = 5, dpi = 300)
+
+
+```
+
+```{r}
+
+## 1. DALYs by cancer type (latest year, global, both sexes, all ages) ----
+gbd_dalys <- gbd_mertic %>%
+  filter(
+    measure  == "DALYs (Disability-Adjusted Life Years)",
+    location == "Global",
+    sex      == "Both",
+    age      == "All ages",
+    metric   == "Number"
+  ) %>%
+  group_by(cause) %>%
+  filter(year == max(year)) %>%
+  ungroup() %>%
+  select(cause, dalys = val)
+
+## 2. Clinical trials by cancer type ----
+clinic_sum <- clinic %>%
+  filter(!is.na(Condition_clean)) %>%
+  group_by(Condition_clean) %>%
+  summarise(
+    n_trials      = n_distinct(TrialID),
+    total_target  = sum(target_total, na.rm = TRUE),
+    .groups = "drop"
+  )
+
+## 3. Join DALYs + trials ----
+df <- gbd_dalys %>%
+  inner_join(clinic_sum, by = c("cause" = "Condition_clean"))
+
+## 4. Order cancers by DALYs (like the example figure) ----
+df <- df %>%
+  arrange(dalys) %>%
+  mutate(cause = factor(cause, levels = cause))
+
+df2 <- df %>%
+  mutate(
+    dalys_mill = dalys / 1e6,       # DALYs → millions
+    #trials_k   = n_trials           # If you want trials as raw counts
+    trials_k   = n_trials / 1e2   # uncomment if you prefer thousands
+  ) %>%
+  arrange(dalys_mill) %>%
+  mutate(cause = factor(cause, levels = cause))
+
+## 2. Convert to long format -----------------------------------------
+plot_df <- df2 %>%
+  select(cause, dalys_mill, trials_k) %>%
+  pivot_longer(
+    cols      = -cause,
+    names_to  = "metric",
+    values_to = "value"
+  ) %>%
+  mutate(
+    value_signed = ifelse(metric == "dalys_mill", -value, value),
+    metric = recode(
+      metric,
+      dalys_mill = "DALYs (millions)",
+      trials_k   = "Trials (hundreds)"
+    )
+  )
+
+## 3. Plot -------------------------------------------------------------
+p_bar <- ggplot(plot_df, aes(x = value_signed, y = cause, fill = metric)) +
+  geom_col(width = 0.8) +
+  scale_x_continuous(
+    breaks = pretty_breaks(10),
+    labels = function(x) comma(abs(x), accuracy = 1)
+  ) +
+  scale_fill_manual(
+    values = c(
+      "DALYs (millions)" = "grey50",
+      "Trials (hundreds)"   = "#1f78b4"
+    ),
+    name = NULL
+  ) +
+  labs(
+    x = NULL,
+    y = NULL,
+    title = "DALYs vs clinical trial activity by cancer type"
+  ) +
+  coord_cartesian(expand = FALSE) +
+  theme_minimal(base_size = 12) +
+  theme(
+    axis.text.y        = element_text(size = 10),
+    legend.position    = "right",
+    panel.grid.major.y = element_blank()
+  )
+
+p_bar
+
+ggsave("../Result/DALYs vs clinical trial bar.png",p_bar,    width = 10, height = 5, dpi = 300)
+
+```
+

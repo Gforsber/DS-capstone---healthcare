@@ -1,0 +1,221 @@
+---
+title: "Country map"
+output: html_document
+date: "2025-12-09"
+---
+
+```{r}
+library(tidyverse)
+library(ggplot2)
+library(sf)
+library(countrycode)
+library(rnaturalearth)
+library(rnaturalearthdata)
+library(ggpubr)
+
+```
+
+**data**
+
+```{r}
+library(readr)
+gbd_cn <- read_csv("../Data/gbd_cn.csv")
+# View(gbd_cn)
+
+gbd_country <- read_csv("../Data/gbd_country.csv")
+#View(gbd_country)
+
+clinic_cn <- read_csv("../Data/clinic_cn.csv")
+#View(clinic_cn)
+
+unique(gbd_country$measure)
+```
+
+
+
+```{r}
+
+ratio_df <- gbd_cn %>%
+  inner_join(clinic_cn, by = c("country_std" = "country_std")) %>%
+  mutate(
+    total_trials      = sum(n_trials, na.rm = TRUE),
+    total_daly      = sum(dalys, na.rm = TRUE),
+    trials_ratio      = n_trials / total_trials,
+    daly_ratio       = dalys / total_daly,
+    ratio             = trials_ratio / daly_ratio
+    ) %>%
+  
+  select(country_std, dalys, n_trials, total_trials, total_daly, daly_ratio, trials_ratio, ratio)
+  
+```
+
+
+```{r}
+world <- ne_countries(scale = "medium", returnclass = "sf")
+
+ratio_df <- ratio_df %>%
+  mutate(
+    country_std = recode(country_std,
+      "Dominican Republic"          = "Dominican Rep.",
+      "United States"               = "United States of America",
+      "Bosnia And Herzegovina"      = "Bosnia and Herz.",
+      "United Republic Of Tanzania" = "Tanzania",
+      "Viet Nam"                    = "Vietnam",
+      "Russian Federation"          = "Russia",
+      "Republic Of Korea"           = "South Korea",                  
+      "W. Sahara" = "Western Sahara",
+      "Laos" = "Lao PDR",
+      "Palestine" = "Palestinian Territories",
+      "Eq. Guinea" = "Equatorial Guinea",
+      "Dominican Rep." = "Dominican Republic",
+      "N. Cyprus" = "Northern Cyprus",
+      "Côte d'Ivoire" = "Ivory Coast",
+      "Dem. Rep. Congo" = "Democratic Republic of the Congo",
+      "Congo" = "Republic of the Congo",
+      "Macao" = "Macau",
+      "Cabo Verde" = "Cape Verde",
+      "Bosnia and Herz." = "Bosnia and Herzegovina",
+      "Indian Ocean Ter." = "British Indian Ocean Territory",
+      "Heard I. and McDonald Is." = "Heard Island and McDonald Islands",
+      "Ashmore and Cartier Is." = "Ashmore and Cartier Islands",
+      "Antigua and Barb." = "Antigua and Barbuda", "Fiji" = "Fiji",
+    "Western Sahara" = "W. Sahara",
+    "Papua New Guinea" = "Papua New Guinea",
+    "Democratic Republic of the Congo" = "Dem. Rep. Congo",
+    "Somalia" = "Somalia",
+    "Sudan" = "Sudan",
+    "Chad" = "Chad",
+    "Haiti" = "Haiti",
+    "Bahamas" = "Bahamas",
+    "Falkland Islands" = "Falkland Is.",
+    "Greenland" = "Greenland",
+    "French Southern Territories" = "Fr. S. Antarctic Lands",
+    "Timor-Leste" = "Timor-Leste",
+    "Lesotho" = "Lesotho",
+    "Bolivia (Plurinational State of)" = "Bolivia",
+    "Nicaragua" = "Nicaragua",
+    "Honduras" = "Honduras",
+    "El Salvador" = "El Salvador",
+    "Belize" = "Belize",
+    "Venezuela (Bolivarian Republic of)" = "Venezuela",
+    "Guyana" = "Guyana",
+    "Suriname" = "Suriname",
+    "Jamaica" = "Jamaica",
+    "Namibia" = "Namibia",
+    "Mali" = "Mali",
+    "Mauritania" = "Mauritania",
+    "Benin" = "Benin",
+    "Niger" = "Niger",
+    "Togo" = "Togo",
+    "Cote d'Ivoire" = "Côte d'Ivoire",
+    "Guinea" = "Guinea",
+    "Guinea-Bissau" = "Guinea-Bissau",
+    "Liberia" = "Liberia",
+    "Sierra Leone" = "Sierra Leone",
+    "Burkina Faso" = "Burkina Faso",
+    "Central African Republic" = "Central African Rep.",
+    "Republic of the Congo" = "Congo",
+    "Gabon" = "Gabon",
+    "Equatorial Guinea" = "Eq. Guinea",
+    "Malawi" = "Malawi",
+    "Eswatini" = "eSwatini",
+    "Angola" = "Angola",
+    "Burundi" = "Burundi",
+    "Madagascar" = "Madagascar",
+    "State of Palestine" = "Palestine",
+    "Qatar" = "Qatar",
+    "Kuwait" = "Kuwait",
+    "Vanuatu" = "Vanuatu",
+    "Lao People's Democratic Republic" = "Laos",
+    "Myanmar" = "Myanmar",
+    "Democratic People’s Republic of Korea" = "North Korea",
+    "Bhutan" = "Bhutan",
+    "Tajikistan" = "Tajikistan",
+    "Kyrgyzstan" = "Kyrgyzstan",
+    "Turkmenistan" = "Turkmenistan",
+    "Iran (Islamic Republic of)" = "Iran",
+    "Syrian Arab Republic" = "Syria",
+    "Republic of Moldova" = "Moldova",
+    "Türkiye" = "Turkey",
+    "New Caledonia" = "New Caledonia",
+    "Solomon Islands" = "Solomon Is.",
+    "Azerbaijan" = "Azerbaijan",
+    "Brunei Darussalam" = "Brunei",
+    "Eritrea" = "Eritrea",
+    "Yemen" = "Yemen",
+    "Northern Cyprus" = "N. Cyprus",
+    "Morocco" = "Morocco",
+    "Libya" = "Libya",
+    "Djibouti" = "Djibouti",
+    "Somaliland" = "Somaliland",
+    "Rwanda" = "Rwanda",
+    "Montenegro" = "Montenegro",
+    "Kosovo" = "Kosovo",
+    "Trinidad and Tobago" = "Trinidad and Tobago",
+    "South Sudan" = "S. Sudan"
+    )
+  )
+
+```
+
+```{r}
+setdiff(ratio_df$country_std, world$name)
+
+setdiff(world$name, ratio_df$country_std)
+
+missing_in_trials_tbl <- world %>%
+  anti_join(ratio_df, by = c("name" = "country_std")) %>%  
+  st_drop_geometry() %>%                                 
+  select(name) %>%
+  arrange(name)
+
+```
+
+
+**Visual**
+```{r}
+world <- ne_countries(returnclass = "sf")
+
+map_df <- map_df %>%
+  mutate(ratio_cat = cut(
+    ratio,
+    breaks = c(-Inf, 0.25, 0.5, 1, 2, Inf),
+    labels = c("<0.25", "0.25–0.5", "0.5–1", "1–2", ">2")
+  ))
+
+# Define a diverging palette that highlights >1 clearly
+ratio_colors <- c(
+  "<0.25" = "#d73027",   # strong red
+  "0.25–0.5" = "#fc8d59",
+  "0.5–1" = "#fee090",   # yellow midpoint
+  "1–2" = "#91cf60",
+  ">2" = "#1a9850"       # strong green
+)
+
+ratio_world_map <- ggplot(map_df) +
+  geom_sf(aes(fill = ratio_cat), color = "white", size = 0.2) +
+  coord_sf(expand = FALSE) +
+  scale_fill_manual(
+    values = ratio_colors,
+    drop = FALSE,
+    name = "Trial share / Burden share"
+  ) +
+  labs(
+    title = "Clinical Trial Activity vs. Disease Burden",
+    caption = "Countries with ratios > 1 have more clinical trials\nrelative to their share of disease burden."
+  ) +
+  theme_void() +
+  theme(
+    axis.title  = element_blank(),
+    axis.text   = element_blank(),
+    axis.ticks  = element_blank(),
+    plot.caption = element_text(hjust = 0.5, size = 8),
+    plot.caption.position = "plot",
+    legend.title = element_text(size = 8),
+    legend.text  = element_text(size = 9)
+  )
+
+
+ratio_world_map
+```
+

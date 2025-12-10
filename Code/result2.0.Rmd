@@ -481,6 +481,197 @@ p1 <- ggplot(country_df, aes(x = dalys, y = n_trials, label = country_std)) +
 ggsave("../Result/Country-level Clinical Trial.png",p1,width = 15, height = 8, dpi = 600)
 ```
 
+###SDI
+```{r}
+SDI <- read_csv("../Data/SDI.csv")
+glimpse(SDI)
+```
+```{r}
+SDI_clean <- SDI %>%
+  rename(
+    country_sdi = `Location Name`,
+    SDI_value = `2023 SDI Index Value`,
+    SDI_quintile = `SDI Quintile`
+  ) %>%
+  mutate(country_std = str_to_title(country_sdi))
+```
+```{r}
+trials_country <- clinic %>%
+  filter(!is.na(Countries_clean)) %>%
+  separate_rows(Countries_clean, sep = ";") %>%
+  mutate(country = str_trim(Countries_clean),
+         country_std = str_to_title(country)) %>%
+  group_by(country_std) %>%
+  summarise(
+    n_trials = n_distinct(TrialID),
+    total_target = sum(target_total, na.rm = TRUE),
+    .groups = "drop"
+  )
+
+```
+
+```{r}
+trials_with_sdi <- trials_country %>%
+  left_join(SDI_clean, by = "country_std")
+
+```
+
+```{r}
+ggplot(trials_with_sdi,
+       aes(x = SDI_value, y = n_trials, color = SDI_quintile)) +
+  geom_point(size = 3, alpha = 0.8) +
+  scale_y_log10() +
+  labs(
+    title = "Country Development Level (SDI) vs Cancer Clinical Trials",
+    x = "Socio-Demographic Index (SDI)",
+    y = "Number of Clinical Trials (log scale)"
+  ) +
+  theme_minimal()
+
+```
+
+```{r}
+SDI_missing <- SDI %>%
+  filter(is.na(`SDI Quintile`) & !is.na(`2023 SDI Index Value`)) %>%
+  select(`Location Name`, `2023 SDI Index Value`)
+SDI_missing
+
+```
+```{r}
+standardize_country <- function(x) {
+  # fix encoding to UTF-8 and handle NAs
+  x_utf8 <- iconv(x, from = "", to = "UTF-8")
+  
+  # lower + trim safely
+  x_low <- tolower(str_trim(x_utf8))
+  
+  case_when(
+    x_low %in% c("united states", "united states of america", "usa", "u.s.a.") ~ "United States",
+    x_low %in% c("united kingdom", "uk", "u.k.")                               ~ "United Kingdom",
+    x_low %in% c("russian federation", "russia")                               ~ "Russia",
+    x_low %in% c("iran (islamic republic of)", "iran")                         ~ "Iran",
+    x_low %in% c("viet nam", "vietnam")                                        ~ "Vietnam",
+    TRUE                                                                       ~ str_to_title(x_low)
+  )
+}
+```
+
+
+
+```{r}
+SDI_calculated <- SDI %>%
+  rename(
+    country_sdi  = `Location Name`,
+    SDI_value    = `2023 SDI Index Value`,
+    SDI_quintile = `SDI Quintile`
+  ) %>%
+  mutate(
+    SDI_quintile_new = case_when(
+      SDI_value < 0.46 ~ "Low SDI",
+      SDI_value < 0.59 ~ "Low-middle SDI",
+      SDI_value < 0.69 ~ "Middle SDI",
+      SDI_value < 0.78 ~ "High-middle SDI",
+      SDI_value >= 0.78 ~ "High SDI",
+      TRUE ~ NA_character_
+    ),
+    SDI_quintile_final = ifelse(
+      is.na(SDI_quintile),
+      SDI_quintile_new,
+      SDI_quintile
+    ),
+    country_std = standardize_country(country_sdi)
+  ) %>%
+  select(country_std, SDI_value, SDI_quintile_final)
+
+```
+
+
+```{r}
+gbd_country_burden <- gbd_country %>%
+  filter(
+    sex == "Both",
+    age == "All ages",
+    metric == "Number",
+    measure == "DALYs (Disability-Adjusted Life Years)"
+  ) %>%
+  group_by(location) %>%
+  filter(year == max(year)) %>%
+  summarise(
+    dalys = val,
+    .groups = "drop"
+  ) %>%
+  mutate(country_std = str_to_title(location))
+
+total_global_dalys <- sum(gbd_country_burden$dalys)
+
+gbd_country_burden <- gbd_country_burden %>%
+  mutate(burden_share = dalys / total_global_dalys)
+
+gbd_country_burden <- gbd_country_burden %>%
+  mutate(country_std = standardize_country(location))
+
+trials_country <- clinic %>%
+  filter(!is.na(Countries_clean)) %>%
+  separate_rows(Countries_clean, sep = ";") %>%
+  mutate(country_std = str_to_title(str_trim(Countries_clean))) %>%
+  group_by(country_std) %>%
+  summarise(
+    n_trials = n_distinct(TrialID),
+    total_target = sum(target_total, na.rm = TRUE),
+    .groups = "drop"
+  )
+
+total_trials_global <- sum(trials_country$n_trials)
+
+trials_country <- trials_country %>%
+  mutate(trial_share = n_trials / total_trials_global)
+```
+
+
+```{r}
+SDI_clean_final <- SDI_calculated %>%
+  mutate(country_std = str_to_title(country_std)) %>%
+  select(country_std, SDI_value, SDI_quintile_final)
+
+
+global_df <- gbd_country_burden %>%
+  left_join(trials_country, by = "country_std") %>%
+  left_join(SDI_clean_final, by = "country_std")
+```
+
+
+
+```{r}
+
+global_df <- global_df %>%
+  mutate(
+    mismatch = trial_share / burden_share,
+    log2_mismatch = log2(mismatch)  # >0 = overrepresented; <0 = underrepresented
+  )
+
+```
+
+```{r}
+SDIClinic <- ggplot(global_df,
+       aes(x = SDI_value, y = log2_mismatch,
+           color = SDI_quintile_final, label = country_std)) +
+  geom_hline(yintercept = 0, linetype = "dashed", color = "grey50") +
+  geom_point(size = 3, alpha = 0.8) +
+  geom_text_repel(max.overlaps = 18, size = 3) +
+  labs(
+    title = "Global Relationship Between SDI and Cancer Trial–Burden Mismatch",
+    subtitle = "log2(trial_share / burden_share): values < 0 = under-represented; values > 0 = over-represented",
+    x = "Socio-Demographic Index (SDI)",
+    y = "Mismatch Index (log2 ratio)"
+  ) +
+  scale_color_brewer(palette = "Set1", na.value = "grey40") +
+  theme_minimal(base_size = 12)
+
+ggsave("../Result/SDI and Cancer Trial–Burden Mismatc.png",SDIClinic,width = 15, height = 8, dpi = 600)
+
+```
+
+
 ### China
 
 ```{r}
@@ -670,11 +861,11 @@ plot_df <- china_diverge %>%
     metric = recode(
       metric,
       burden_val = "DALYs (millions)",
-      trial_val  = "Trials"
+      trial_val  = "Trials(hundreds)"
     )
   )
 
-ggplot(plot_df, aes(x = value_signed, y = cause, fill = metric)) +
+china <- ggplot(plot_df, aes(x = value_signed, y = cause, fill = metric)) +
   geom_col(width = 0.8) +
   scale_x_continuous(labels = ~abs(.)) +
   labs(
@@ -682,6 +873,8 @@ ggplot(plot_df, aes(x = value_signed, y = cause, fill = metric)) +
     x = NULL, y = NULL
   ) +
   theme_minimal()
+
+ggsave("../Result/China: DALYs vs Clinical Trials.png",china,width = 15, height = 8, dpi = 600)
 
 ```
 ```{r}

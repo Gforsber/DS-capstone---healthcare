@@ -183,7 +183,6 @@ ggsave(
 )
 ```
 
-
 ```{r}
 # Phase 3 vs. Phase 4
 ctg_phases <- ctg %>%
@@ -225,5 +224,3 @@ ggplot(phase34_by_cancer,
   
   
 ```
-
-

@@ -56,103 +56,65 @@ world <- ne_countries(scale = "medium", returnclass = "sf")
 ratio_df <- ratio_df %>%
   mutate(
     country_std = recode(country_std,
-      "Dominican Republic"          = "Dominican Rep.",
       "United States"               = "United States of America",
-      "Bosnia And Herzegovina"      = "Bosnia and Herz.",
       "United Republic Of Tanzania" = "Tanzania",
       "Viet Nam"                    = "Vietnam",
       "Russian Federation"          = "Russia",
       "Republic Of Korea"           = "South Korea",                  
-      "W. Sahara" = "Western Sahara",
+      "Western Sahara" = "W. Sahara",
       "Laos" = "Lao PDR",
       "Palestine" = "Palestinian Territories",
       "Eq. Guinea" = "Equatorial Guinea",
-      "Dominican Rep." = "Dominican Republic",
       "N. Cyprus" = "Northern Cyprus",
       "Côte d'Ivoire" = "Ivory Coast",
       "Dem. Rep. Congo" = "Democratic Republic of the Congo",
       "Congo" = "Republic of the Congo",
       "Macao" = "Macau",
-      "Cabo Verde" = "Cape Verde",
-      "Bosnia and Herz." = "Bosnia and Herzegovina",
       "Indian Ocean Ter." = "British Indian Ocean Territory",
       "Heard I. and McDonald Is." = "Heard Island and McDonald Islands",
       "Ashmore and Cartier Is." = "Ashmore and Cartier Islands",
       "Antigua and Barb." = "Antigua and Barbuda", "Fiji" = "Fiji",
-    "Western Sahara" = "W. Sahara",
     "Papua New Guinea" = "Papua New Guinea",
     "Democratic Republic of the Congo" = "Dem. Rep. Congo",
-    "Somalia" = "Somalia",
-    "Sudan" = "Sudan",
-    "Chad" = "Chad",
-    "Haiti" = "Haiti",
-    "Bahamas" = "Bahamas",
+  
     "Falkland Islands" = "Falkland Is.",
-    "Greenland" = "Greenland",
     "French Southern Territories" = "Fr. S. Antarctic Lands",
-    "Timor-Leste" = "Timor-Leste",
-    "Lesotho" = "Lesotho",
     "Bolivia (Plurinational State of)" = "Bolivia",
-    "Nicaragua" = "Nicaragua",
-    "Honduras" = "Honduras",
-    "El Salvador" = "El Salvador",
-    "Belize" = "Belize",
+  
     "Venezuela (Bolivarian Republic of)" = "Venezuela",
-    "Guyana" = "Guyana",
-    "Suriname" = "Suriname",
-    "Jamaica" = "Jamaica",
-    "Namibia" = "Namibia",
-    "Mali" = "Mali",
-    "Mauritania" = "Mauritania",
-    "Benin" = "Benin",
-    "Niger" = "Niger",
-    "Togo" = "Togo",
+   
     "Cote d'Ivoire" = "Côte d'Ivoire",
-    "Guinea" = "Guinea",
-    "Guinea-Bissau" = "Guinea-Bissau",
-    "Liberia" = "Liberia",
-    "Sierra Leone" = "Sierra Leone",
-    "Burkina Faso" = "Burkina Faso",
+  
+  
     "Central African Republic" = "Central African Rep.",
     "Republic of the Congo" = "Congo",
-    "Gabon" = "Gabon",
     "Equatorial Guinea" = "Eq. Guinea",
-    "Malawi" = "Malawi",
     "Eswatini" = "eSwatini",
-    "Angola" = "Angola",
-    "Burundi" = "Burundi",
-    "Madagascar" = "Madagascar",
     "State of Palestine" = "Palestine",
-    "Qatar" = "Qatar",
-    "Kuwait" = "Kuwait",
-    "Vanuatu" = "Vanuatu",
+    
     "Lao People's Democratic Republic" = "Laos",
-    "Myanmar" = "Myanmar",
+  
     "Democratic People’s Republic of Korea" = "North Korea",
-    "Bhutan" = "Bhutan",
-    "Tajikistan" = "Tajikistan",
-    "Kyrgyzstan" = "Kyrgyzstan",
-    "Turkmenistan" = "Turkmenistan",
+  
+ 
     "Iran (Islamic Republic of)" = "Iran",
     "Syrian Arab Republic" = "Syria",
     "Republic of Moldova" = "Moldova",
     "Türkiye" = "Turkey",
     "New Caledonia" = "New Caledonia",
     "Solomon Islands" = "Solomon Is.",
-    "Azerbaijan" = "Azerbaijan",
+    
     "Brunei Darussalam" = "Brunei",
-    "Eritrea" = "Eritrea",
-    "Yemen" = "Yemen",
+  
+
     "Northern Cyprus" = "N. Cyprus",
-    "Morocco" = "Morocco",
-    "Libya" = "Libya",
-    "Djibouti" = "Djibouti",
-    "Somaliland" = "Somaliland",
-    "Rwanda" = "Rwanda",
-    "Montenegro" = "Montenegro",
-    "Kosovo" = "Kosovo",
-    "Trinidad and Tobago" = "Trinidad and Tobago",
-    "South Sudan" = "S. Sudan"
+   
+
+    "South Sudan" = "S. Sudan",
+    "Bosnia and Herzegovina" = "Bosnia and Herz.",
+    "Republic Of Korea"      = "South Korea",
+    "Republic of Korea"      = "South Korea", 
+    "Dominican Republic" = "Dominican Rep."
     )
   )
 
@@ -161,13 +123,6 @@ ratio_df <- ratio_df %>%
 ```{r}
 setdiff(ratio_df$country_std, world$name)
 
-setdiff(world$name, ratio_df$country_std)
-
-missing_in_trials_tbl <- world %>%
-  anti_join(ratio_df, by = c("name" = "country_std")) %>%  
-  st_drop_geometry() %>%                                 
-  select(name) %>%
-  arrange(name)
 
 ```
 
@@ -175,6 +130,7 @@ missing_in_trials_tbl <- world %>%
 **Visual**
 ```{r}
 world <- ne_countries(returnclass = "sf")
+
 
 map_df <- map_df %>%
   mutate(ratio_cat = cut(
@@ -185,11 +141,12 @@ map_df <- map_df %>%
 
 # Define a diverging palette that highlights >1 clearly
 ratio_colors <- c(
-  "<0.25" = "#d73027",   # strong red
-  "0.25–0.5" = "#fc8d59",
-  "0.5–1" = "#fee090",   # yellow midpoint
-  "1–2" = "#91cf60",
-  ">2" = "#1a9850"       # strong green
+   "<0.25" = "#d7191c",
+    "0.25–0.5" = "#fdae61",
+    "0.5–1" = "#ffffbf",
+    "1–2" = "#91B5F2",
+    ">2" = "#2b83ba",
+    "NA" = "grey80"
 )
 
 ratio_world_map <- ggplot(map_df) +
@@ -217,5 +174,138 @@ ratio_world_map <- ggplot(map_df) +
 
 
 ratio_world_map
+
+ggsave("../Result/Clinical Trial Activity vs. Disease Burden.png",ratio_world_map,  width = 10, height = 5, dpi = 300)
 ```
+**Burden map**
+```{r}
+daly2 <- daly_ratio_df %>%
+  filter(country_std == "United States")
+```
+
+```{r}
+daly_ratio_df <- gbd_cn %>%
+  mutate(
+    total_daly      = sum(dalys, na.rm = TRUE),
+    daly_ratio       = dalys / total_daly,
+    ) %>%
+  
+  select(country_std, dalys, total_daly, daly_ratio)
+
+daly_ratio_df_clean <- daly_ratio_df %>%
+  mutate(country_std = recode(country_std,
+      "United States"               = "United States of America",
+      "United Republic Of Tanzania" = "Tanzania",
+      "Viet Nam"                    = "Vietnam",
+      "Russian Federation"          = "Russia",
+      "Republic Of Korea"           = "South Korea",                  
+      "Western Sahara" = "W. Sahara",
+      "Laos" = "Lao PDR",
+      "Eq. Guinea" = "Equatorial Guinea",
+      "N. Cyprus" = "Northern Cyprus",
+
+  
+      "Macao" = "Macau",
+      "Indian Ocean Ter." = "British Indian Ocean Territory",
+      "Heard I. and McDonald Is." = "Heard Island and McDonald Islands",
+      "Ashmore and Cartier Is." = "Ashmore and Cartier Islands",
+      "Antigua and Barb." = "Antigua and Barbuda", "Fiji" = "Fiji",
+ 
+   
+    "Falkland Islands" = "Falkland Is.",
+    "French Southern Territories" = "Fr. S. Antarctic Lands",
+    "Bolivia (Plurinational State of)" = "Bolivia",
+  
+    "Venezuela (Bolivarian Republic of)" = "Venezuela",
+  
+  
+  
+    "Central African Republic" = "Central African Rep.",
+  
+    "Equatorial Guinea" = "Eq. Guinea",
+    "Eswatini" = "eSwatini",
+    "State of Palestine" = "Palestine",
+    
+    "Lao People's Democratic Republic" = "Laos",
+  
+  
+ 
+    "Iran (Islamic Republic of)" = "Iran",
+    "Syrian Arab Republic" = "Syria",
+
+    "Türkiye" = "Turkey",
+    "New Caledonia" = "New Caledonia",
+    "Solomon Islands" = "Solomon Is.",
+    
+    "Brunei Darussalam" = "Brunei",
+  
+
+    "Northern Cyprus" = "N. Cyprus",
+   
+
+    "South Sudan" = "S. Sudan",
+   
+    "Republic Of Korea"      = "South Korea",
+    "Republic of Korea"      = "South Korea", 
+    "Dominican Republic" = "Dominican Rep.", 
+    
+      "Democratic Republic Of The Congo"      = "Dem. Rep. Congo",
+      "Republic of the Congo"                 = "Congo",
+      "Bosnia And Herzegovina"                = "Bosnia and Herz.",
+      "Iran (Islamic Republic Of)"            = "Iran",
+      "Republic Of Moldova"                   = "Moldova",
+      "Sao Tome And Principe"                 = "Sao Tome and Principe",
+      "Trinidad And Tobago"                   = "Trinidad and Tobago",
+      "Democratic People's Republic Of Korea" = "North Korea",
+      "Bolivia (Plurinational State Of)"      = "Bolivia",
+      "Venezuela (Bolivarian Republic Of)"    = "Venezuela",
+      "Côte D'ivoire"                         = "Côte d'Ivoire",
+      "Cabo Verde"                            = "Cape Verde",
+      "Micronesia (Federated States Of)"      = "Micronesia",
+      "Palestinian Territories"               = "Palestine"
+
+
+    
+  ))
+
+burden_map_df <- world %>%
+  left_join(daly_ratio_df_clean, by = c("name" = "country_std"))
+```
+
+```{r}
+
+burden_world_map <- ggplot(burden_map_df) +
+  geom_sf(aes(fill = daly_ratio), color = "white", size = 0.2) +
+  coord_sf(expand = FALSE) +
+  scale_fill_gradientn(
+  colors = c("#e0ecf4", "#9ebcda", "#8c6bb1", "#88419d", "#6e016b"),
+  trans = "sqrt",
+  labels = percent_format(accuracy = 0.1),
+  name = "Share of global\nDALY burden"
+  ) +
+  labs(
+    title   = "Global Distribution of Disease Burden (DALYs)",
+    caption = "Darker colors indicate countries with a higher share of global DALY burden."
+  ) +
+  theme_void() +
+  theme(
+    axis.title  = element_blank(),
+    axis.text   = element_blank(),
+    axis.ticks  = element_blank(),
+    plot.caption = element_text(hjust = 0.5, size = 8),
+    plot.caption.position = "plot",
+    legend.title = element_text(size = 8),
+    legend.text  = element_text(size = 9)
+  )
+
+burden_world_map
+
+
+setdiff(daly_ratio_df_clean$country_std, world$name) 
+setdiff(world$name, daly_ratio_df_clean$country_std) 
+
+ggsave("../Result/Global Distribution.png",burden_world_map,  width = 10, height = 5, dpi = 300)
+```
+
+
 

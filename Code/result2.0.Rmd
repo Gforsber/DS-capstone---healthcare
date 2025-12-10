@@ -538,22 +538,25 @@ SDI_missing
 
 ```
 ```{r}
-# prepare full SDI dataset
-SDI_base <- SDI %>%
-  rename(
-    country_sdi  = `Location Name`,
-    SDI_value    = `2023 SDI Index Value`,
-    SDI_quintile = `SDI Quintile`
-  ) %>%
-  filter(!is.na(SDI_value))   # only numeric values
-
+standardize_country <- function(x) {
+  # fix encoding to UTF-8 and handle NAs
+  x_utf8 <- iconv(x, from = "", to = "UTF-8")
+  
+  # lower + trim safely
+  x_low <- tolower(str_trim(x_utf8))
+  
+  case_when(
+    x_low %in% c("united states", "united states of america", "usa", "u.s.a.") ~ "United States",
+    x_low %in% c("united kingdom", "uk", "u.k.")                               ~ "United Kingdom",
+    x_low %in% c("russian federation", "russia")                               ~ "Russia",
+    x_low %in% c("iran (islamic republic of)", "iran")                         ~ "Iran",
+    x_low %in% c("viet nam", "vietnam")                                        ~ "Vietnam",
+    TRUE                                                                       ~ str_to_title(x_low)
+  )
+}
 ```
 
-```{r}
-quintile_breaks <- quantile(SDI_base$SDI_value, probs = seq(0, 1, 0.2), na.rm = TRUE)
-quintile_breaks
 
-```
 
 ```{r}
 SDI_calculated <- SDI %>%
@@ -563,7 +566,6 @@ SDI_calculated <- SDI %>%
     SDI_quintile = `SDI Quintile`
   ) %>%
   mutate(
-    # official IHME SDI thresholds
     SDI_quintile_new = case_when(
       SDI_value < 0.46 ~ "Low SDI",
       SDI_value < 0.59 ~ "Low-middle SDI",
@@ -572,16 +574,14 @@ SDI_calculated <- SDI %>%
       SDI_value >= 0.78 ~ "High SDI",
       TRUE ~ NA_character_
     ),
-    # keep IHME-provided quintile if available
     SDI_quintile_final = ifelse(
       is.na(SDI_quintile),
       SDI_quintile_new,
       SDI_quintile
-    )
+    ),
+    country_std = standardize_country(country_sdi)
   ) %>%
-  mutate(country_std = str_to_title(country_sdi)) %>%
   select(country_std, SDI_value, SDI_quintile_final)
-
 
 ```
 
@@ -607,8 +607,8 @@ total_global_dalys <- sum(gbd_country_burden$dalys)
 gbd_country_burden <- gbd_country_burden %>%
   mutate(burden_share = dalys / total_global_dalys)
 
-
-# 2. Country-level trial involvement -------------------------------
+gbd_country_burden <- gbd_country_burden %>%
+  mutate(country_std = standardize_country(location))
 
 trials_country <- clinic %>%
   filter(!is.na(Countries_clean)) %>%
@@ -627,6 +627,7 @@ trials_country <- trials_country %>%
   mutate(trial_share = n_trials / total_trials_global)
 ```
 
+
 ```{r}
 SDI_clean_final <- SDI_calculated %>%
   mutate(country_std = str_to_title(country_std)) %>%
@@ -637,6 +638,8 @@ global_df <- gbd_country_burden %>%
   left_join(trials_country, by = "country_std") %>%
   left_join(SDI_clean_final, by = "country_std")
 ```
+
+
 
 ```{r}
 
@@ -649,7 +652,7 @@ global_df <- global_df %>%
 ```
 
 ```{r}
-ggplot(global_df,
+SDIClinic <- ggplot(global_df,
        aes(x = SDI_value, y = log2_mismatch,
            color = SDI_quintile_final, label = country_std)) +
   geom_hline(yintercept = 0, linetype = "dashed", color = "grey50") +
@@ -663,6 +666,8 @@ ggplot(global_df,
   ) +
   scale_color_brewer(palette = "Set1", na.value = "grey40") +
   theme_minimal(base_size = 12)
+
+ggsave("../Result/SDI and Cancer Trial–Burden Mismatc.png",SDIClinic,width = 15, height = 8, dpi = 600)
 
 ```
 
@@ -856,7 +861,7 @@ plot_df <- china_diverge %>%
     metric = recode(
       metric,
       burden_val = "DALYs (millions)",
-      trial_val  = "Trials"
+      trial_val  = "Trials(hundreds)"
     )
   )
 

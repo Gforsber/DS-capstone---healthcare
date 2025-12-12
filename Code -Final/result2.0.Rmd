@@ -555,7 +555,7 @@ global_df <- global_df %>%
 
 ```
 
-```{r}
+```{r echo=TRUE}
 SDIClinic <- ggplot(global_df,
        aes(x = SDI_value, y = log2_mismatch,
            color = SDI_quintile_final, label = country_std)) +
@@ -570,8 +570,7 @@ SDIClinic <- ggplot(global_df,
   ) +
   scale_color_brewer(palette = "Set1", na.value = "grey40") +
   theme_minimal(base_size = 12)
-
-ggsave("../Result/SDI and Cancer Trial–Burden Mismatc.png",SDIClinic,width = 15, height = 8, dpi = 600)
+SDIClinic
 
 ```
 

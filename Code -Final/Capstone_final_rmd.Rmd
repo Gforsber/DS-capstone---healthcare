@@ -5,26 +5,444 @@ date: "2025-12-12"
 output: html_document
 ---
 
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+---
+title: "FP4"
+author: "Gregory Forsberg"
+date: "2025-11-14"
+output: html_document
+---
+
+#current working areas
+Our project tasks are all focused on this somewhat new data set and trying to determine the overall nature of clinical trials around the world. With access to data such as geographics, sponsor type, and cancer treatment type, there are many details we want to explore further. Gregory is currently looking into temporal trends with clinical trials and if the rapid growth of trials reflects a decrease in death rates. Scarlett is looking into the sponsor types of the trials and establishing a way to show geographics/location of the trials. Khalessi is working on optimizing the categorization of the llm that scapred the data, ensuring accurate criteria in addition to looking into the overall funding of cancer types.
+
+#Guide
+Currently, we have our data spread throughout most docs but this has all of it combined with the exception of the llm rmd titled "clean.rmd" in the code folder. In addition, there is a read.me file that discusses the data and a brief overview of it. 
+
+#Movation and research question
+Our current focus for our project is centered around looking into how global burden of disease is being addressed by clinical trials around the world. Different center types have different amount of funding which heavily influence there development to create a successful treatment to said cancer, with many under funded types of cancer having signifianlty less amount of funding for research. As a result, our current research question is: How does clinical research around the world address known disease burdens? Is there sufficient research to address the health issues?
+
+#Contribution of FP4.
+The work for this was spread out quite evenly, with each person being responsible for 3 slides for the presentation aspect. We split up the sections to ensure there was a logical flow to the presentation. For this written section, we each copied the important aspects of our code into this rmd. Gregory wrote the reflection portions of this document. Khalessi and scarlett worked on the read.me file. 
+
+#Ethics
+Over all, our goal is to minimize any people who might be hurt by this study. After conversations with our experts, they push us to both make our data accessible to all people and to look into cancer types that effect lower income countries who might not have the awareness to gain more funding to further research cancer types that they are more effected by. We understand that the nature of clinical trials is very specific and that not all people can be candidates for the trials, thus we are looking at it more from a developmental standard and hope that these trials will progress into common proven treatments for millions of people. 
+
+#Summy contributuons
+Overall in this project, the work has been divided quite evenly. All three of us were able to looking into datasets which we eventually settled upon the gbd and clinicaltrials.gov data. From here, we all created different graphs looking at different issues which can be seen in the code sections below. Khalessi completed the scraping of the cdc website using open ai 4.1 mini (we think but unsure at the moment but will confirm) to format the data into something more usable for our analysis. With this still somewhat new data set, we are all working on establishing trends and focusing on addressing our central research question. 
+
+#Ai Useage
+Some ai was used to improve visuals such as color scale and themes, it was also used to scrape data from the cdc clinical trials website. 
+
+
+#loading packages
+```{r}
+library(readr)
+library(dplyr)
+library(tidyr)
+library(stringr)
+library(tidyverse)
+library(lubridate)
+library(ggplot2)
+library(ggrepel)
+library(scales)
+library(treemapify)
+library(ggpubr)
+library(forcats)
+library(sf)
+library(countrycode)
+library(rnaturalearth)
+library(rnaturalearthdata)
+library(ineq)
 ```
 
-## R Markdown
+#loading in data
+- ClinicalTrials.gov — Global Interventional Cancer Trials: Central repository for interventional and observational trials; includes study design, enrollment, and outcomes
+- IHME Global Burden of Disease (GBD) — Global Cancer DALYs: Provides global epidemiological data on mortality, morbidity, and risk factors across countries and disease categories
+```{r}
+totalcancer <- read_csv("../Data/IHME-GBD_2021_DATA-eae6be09-1.csv")
+clean_scrape_data <- read.csv("../Data/ctg_clean.csv")
+world <- ne_countries(scale = "medium", returnclass = "sf")
+cancerdaly <- read_csv("../Data/IHME-GBD_2021_DATA-12473b24-1.csv")
+```
+#Gregory
+```{r}
+total_by_year <- totalcancer %>%
+  filter(metric == "Number", measure == "Deaths") %>%  
+  group_by(year, cause) %>%
+  summarise(total = sum(val, na.rm = TRUE), .groups = "drop")
 
-This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+top_causes <- total_by_year %>%
+  group_by(cause) %>%
+  summarise(overall_total = sum(total, na.rm = TRUE), .groups = "drop") %>%
+  slice_max(overall_total, n = 10) %>%   
+  pull(cause)
 
-When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+top_cancers_only <- total_by_year %>%
+  filter(cause %in% top_causes)
 
-```{r cars}
-summary(cars)
+ggplot(top_cancers_only, aes(x = year, y = total, color = cause)) +
+  geom_line(size = 1) +
+  labs(title = "Cancer Types by Total Deaths Over Time (Top 10)",
+       x = "Year", y = "Total Deaths", color = "Cancer Type") +
+    scale_y_continuous(labels = comma) +
+  theme_minimal()
+
+ct_count <- clean_scrape_data %>% 
+  group_by(Condition_clean) %>% 
+  summarize(count = n()) %>% 
+  arrange(desc(count)) %>% 
+  slice_head(n = 10)
+
+ggplot(ct_count,aes(reorder(Condition_clean, count), count))+
+  geom_col()+
+  theme_minimal()+
+  labs(x = "Clinical trial targeted Condition")+
+  theme(axis.text.x = element_text(angle = 45, hjust = 1, size = 6)) 
+
+latest_year <- max(totalcancer$year, na.rm = TRUE)
+
+global_latest <- totalcancer %>%
+  filter(location == "Global", metric == "Number", measure == "Deaths", age == "All ages", sex == "Both", year == latest_year) %>%
+  group_by(cause) %>%
+  summarise(total_deaths = sum(val, na.rm = TRUE), .groups = "drop") %>%
+  arrange(desc(total_deaths)) %>%
+  slice_head(n = 15)
+
+ggplot(global_latest, aes(x = reorder(cause, total_deaths), y = total_deaths)) +
+  geom_col(fill = "blue") +
+  coord_flip() +
+  labs(title = paste("Top 15 Global Cancer Deaths in", latest_year), x = "Cancer Type", y = "Total Deaths") +
+  theme_minimal()
+
+global_trend <- totalcancer %>%
+  filter(location == "Global", metric == "Number", measure == "Deaths", age == "All ages", sex == "Both") %>%
+  group_by(year) %>%
+  summarise(total_deaths = sum(val, na.rm = TRUE), .groups = "drop")
+
+ggplot(global_trend, aes(x = year, y = total_deaths)) +
+  geom_line(size = 1.2, color = "red") +
+  geom_point(color = "darkred") +
+  labs(title = "Total Global Cancer Deaths Over Time", x = "Year", y = "Total Deaths") +
+  theme_minimal()
+
+rate_dalys_trend <- cancerdaly %>%
+  filter(location_name == "America",
+         measure_name == "DALYs (Disability-Adjusted Life Years)",
+         metric_name == "Rate", #100,000?
+         sex_name == "Both",
+         age_name == "All ages",
+         cause_name != "Neoplasms") %>%
+  group_by(year) %>%
+  summarise(avg_daly_rate = mean(val, na.rm = TRUE), .groups = "drop")
+
+ggplot(rate_dalys_trend, aes(x = year, y = avg_daly_rate)) +
+  geom_line(color = "darkgreen", size = 1.2) +
+  geom_point(color = "green") +
+  labs(title = "Cancer DALY Rate per 100k (America)",
+       x = "Year", y = "DALYs per 100,000") +
+  theme_minimal()
+```
+1) This visualization shows the death rate (per 100,000) by cancer type from 1980 to 2021 for the top ten causes of cancer deaths. The x-axis displays the year, and the y-axis shows the total death counts, with each colored line representing the different cancer types. This visualization address one of our research questions being: How have global cancer death rates changed over time? Understanding these important trends help drive public health and policy efforts and future medical research in treating cancer.
+
+The highest death rate during this period is for tracheal, bronchus, and lung cancer which peaked in about the 1990s and has since slowly declined. This could be a result of a decrease in smoking among younger populations and/or advancement made in medicine to treat this type of cancer. Stomach cancer shows a significant and consistent decline, while most other cancer types remained stable or trend downward, though more gradually. These patterns reflect a variety of different factors such as medical advancements, changes in societal habits, and preventative care initiatives.
+
+2) Graph looks at the raw totals of clinical trials based off the types of neoplasm that they target.
+
+3) Graph looks at the global cancer death rates for top 15 cancer deaths in 2021.
+
+4) Graph looks at the total global cancer deaths over time from 2012 to 2021.
+
+5) Graph DALY rate per 100k from 2012 to 2021 within america for cancer.
+
+#Khalessi
+Has done a great amount of work on our llm to scrape the data from the clinical gov website. The code for the llm is in the code file titled "Clean.RMD". It isn't included in this rmd so that we don't re-run the llm. 
+```{r}
+ctg <- read.csv("../Data/ctg_clean.csv")
+gbd <- read.csv("../Data/gbd_death.csv")
 ```
 
-## Including Plots
+```{r}
+trial_by_cancer <- ctg %>%
+  count(Condition_clean, name = "trial_count")
 
-You can also embed plots, for example:
+gbd_latest <- gbd %>%
+  filter(
+    location == "Global",
+    sex == "Both",
+    metric == "Number",     
+    measure == "Deaths",
+    year == max(year)
+  ) %>%
+  select(cause, death_number = val)
 
-```{r pressure, echo=FALSE}
-plot(pressure)
+compare_df <- trial_by_cancer %>%
+  inner_join(gbd_latest, by = c("Condition_clean" = "cause")) %>%
+  mutate(
+    total_trials      = sum(trial_count, na.rm = TRUE),
+    total_deaths      = sum(death_number, na.rm = TRUE),
+    trials_share      = trial_count / total_trials,
+    death_share       = death_number / total_deaths,
+    ratio             = trials_share / death_share,
+    status            = if_else(ratio < 1, "Under-studied", "Over-studied")
+  )
 ```
 
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+```{r}
+p1 <- ggplot(compare_df, aes(x = death_share, y = trials_share, label = Condition_clean)) +
+  geom_point(aes(size = trial_count, color = status), alpha = 0.85) +
+  geom_abline(slope = 1, intercept = 0, linetype = "dashed", color = "gray40") +
+  geom_text_repel(max.overlaps = 12, size = 3) +
+  scale_x_log10(labels = percent_format(accuracy = 0.01)) +
+  scale_y_log10(labels = percent_format(accuracy = 0.01)) +
+  scale_color_manual(
+    values = c("Under-studied" = "#E74C3C", "Over-studied" = "#2E8B57"),
+    name = "Research Attention"
+  ) +
+  scale_size_continuous(name = "Trial count") +
+  labs(
+    title = "Clinical Trial Share vs. Death Share by Cancer Type",
+    subtitle = "Using global number of deaths (GBD)  — log-scaled shares",
+    x = "Death share (proportion of total cancer deaths)",
+    y = "Trial share (proportion of total cancer trials)"
+  ) +
+  theme_minimal(base_size = 13)
+p1
+```
+
+- This graph compares how many clinical trials each cancer type receives (y-axis) with how much global mortality it causes (x-axis). Both axes use log scales. The dashed diagonal line represents a 1:1 ratio, where a cancer gets research attention proportional to its death burden. The Green points represent the well-studied or over-studied cancers, which are those with more trials than expected relative to how many people they kill. Red points represent under-studied cancers, which are those with fewer trials than expected given their mortality burden. Point size shows the number of trials (larger = more trials).
+
+
+```{r}
+library(lubridate)
+
+p2 <- ctg %>%
+  mutate(Year = year(ym(str_sub(`Start.Date`, 1, 7)))) %>%
+  count(Year) %>%
+  ggplot(aes(x = Year, y = n)) +
+  geom_line(color = "#E69F00", linewidth = 1) +
+  scale_x_continuous(
+    limits = c(1970, 2025),        # 👈 force scale to end at 2025
+    breaks = seq(1970, 2025, by = 5)
+  ) +
+  labs(
+    title = "Growth of Cancer Clinical Trials (1970–2025)",
+    x = "Year of trial start",
+    y = "Number of new trials"
+  ) +
+  theme_minimal(base_size = 13)
+
+p2
+```
+
+- This graph shows how the number of new cancer clinical trials has grown over time. From 1970 to the early 1990s, very few trials were launched each year. Starting in the mid-1990s, trial activity increased sharply, and by the 2000s the growth became exponential. Today, we see more than 600 new cancer trials being initiated each year.
+
+#Scarlett
+```{r}
+#data
+IHME_data <- read_csv("../Data/IHME_data.csv")
+world <- ne_countries(scale = "medium", returnclass = "sf")
+
+
+```
+
+```{r}
+IHME_data <- IHME_data %>%
+  mutate(location = recode(location,
+    "Viet Nam"                               = "Vietnam",
+    "Venezuela(Bolivarian Republic of)"      = "Venezuela",
+    "Syrian Arab Republic"                   = "Syria",
+    "Republic of Korea"   = "South Korea",
+    "Democratic People's Republic of Korea"  = "North Korea",
+    "Russian Federation"                     = "Russia",
+    "Taiwan(Province of China)"              = "Taiwan",
+    "United Republic of Tanzania"            = "Tanzania",
+    "Lao People's Democratic Republic"       = "Laos",
+    "Iran (Islamic Republic of)"             = "Iran",
+    "Republic of Moldova"                    = "Moldova",
+    "Eswatini"                               = "Swaziland",
+    "Bolivia (Plurinational State of)"       = "Bolivia",
+    "Democratic Republic of the Congo" = "Congo (Kinshasa)",
+    "Republic of the Congo" = "Congo (Brazzaville)",
+    "Micronesia (Federated States of)"   = "Micronesia",
+    "Marshall Islands"                   = "Marshall Is.",
+    "Northern Mariana Islands"           = "N. Mariana Is.",
+    "United States Virgin Islands"       = "U.S. Virgin Is.",
+    "Antigua and Barbuda"                = "Antigua",
+    "Saint Kitts and Nevis"              = "Saint Kitts",
+    "Dominican Republic"                 = "Dominican Rep.",
+    "Sao Tome and Principe"              = "Sao Tome & Principe",
+    "Saint Vincent and the Grenadines"   = "Saint Vincent",
+    "Cook Islands"                       = "Cook Is.",
+    "Solomon Islands"                    = "Solomon Is.",
+    "Equatorial Guinea"                  = "Eq. Guinea",
+    "Bosnia and Herzegovina"             = "Bosnia",
+    "Brunei Darussalam"                  = "Brunei",
+    "South Sudan"                        = "S. Sudan",
+    "Central African Republic"           = "Central African Rep.",
+    "Tokelau"                            = "Tokelau"   # may not exist in world map
+
+  ))
+
+```
+
+
+```{r, eval=FALSE}
+top4<- IHME_data%>%
+  group_by(cause)%>%
+  summarise(val = mean(val))%>%
+  arrange(desc(val))
+```
+
+**Visualization**
+```{r}
+world <- ne_countries(returnclass = "sf")
+
+focus_cause <- "Stomach cancer"
+
+focus_cause2 <- "Tracheal, bronchus, and lung cancer"
+
+focus_cause3 <- "Breast cancer"
+
+focus_cause4 <- "Colon and rectum cancer"
+
+ihme_map_stomach <- IHME_data %>%
+  filter(cause == focus_cause, 
+         measure == "Deaths", 
+         metric == "Rate") %>%
+  group_by(location) %>%
+  summarise(val = mean(val, na.rm = TRUE), .groups="drop")
+
+
+mapdata <- world %>%
+  left_join(ihme_map_stomach, by = c("name" = "location"))
+
+Liver_cancer <- ggplot(mapdata) +
+  geom_sf(aes(fill = val), color = "white", size = 0.2) +
+  labs(caption = "Age-standardized death rate for Stomach cancer",
+       fill = "Rate per 100k") +
+  theme_classic()+
+  theme(
+    plot.caption = element_text(hjust = 0.5, size = 14),  
+    plot.caption.position = "plot")+
+  scale_fill_stepsn(
+  colours = c("#1a9850", "#fee08b", "#d73039"),
+  breaks = c(5, 10, 15, 20, 30, 40, 60), 
+  na.value = "grey90",
+  name = "Rate per 100k"
+)
+
+```
+
+
+```{r}
+ihme_map_lung <- IHME_data %>%
+  filter(cause == focus_cause2, 
+         measure == "Deaths", 
+         metric == "Rate") %>%
+  group_by(location) %>%
+  summarise(val = mean(val, na.rm = TRUE), .groups="drop")
+
+
+mapdata2 <- world %>%
+  left_join(ihme_map_lung, by = c("name" = "location"))
+
+Lung_cancer <- ggplot(mapdata2) +
+  geom_sf(aes(fill = val), color = "white", size = 0.2) +
+  labs(caption = "Age-standardized death rate for Tracheal, bronchus, and Lung cancer",
+       fill = "Rate per 100k") +
+  theme_classic()+
+  theme(
+    plot.caption = element_text(hjust = 0.5, size = 14),  
+    plot.caption.position = "plot")+
+  scale_fill_stepsn(
+  colours = c("#1a9850", "#fee08b", "#d73039"),
+  breaks = c(5, 10, 15, 20, 30, 40, 60), 
+  na.value = "grey90",
+  name = "Rate per 100k"
+)
+```
+
+```{r}
+ihme_map_breast <- IHME_data %>%
+  filter(cause == focus_cause3, 
+         measure == "Deaths", 
+         metric == "Rate") %>%
+  group_by(location) %>%
+  summarise(val = mean(val, na.rm = TRUE), .groups="drop")
+
+
+mapdata3 <- world %>%
+  left_join(ihme_map_breast, by = c("name" = "location"))
+
+Breast_cancer <- ggplot(mapdata3) +
+  geom_sf(aes(fill = val), color = "white", size = 0.2) +
+  labs(caption = "Age-standardized death rate for Breast cancer",
+       fill = "Rate per 100k") +
+  theme_classic()+
+  theme(
+    plot.caption = element_text(hjust = 0.5, size = 14),  
+    plot.caption.position = "plot")+
+  scale_fill_stepsn(
+  colours = c("#1a9850", "#fee08b", "#d73039"),
+  breaks = c(5, 10, 15, 20, 30, 40, 60), 
+  na.value = "grey90",
+  name = "Rate per 100k"
+)
+```
+
+```{r}
+ihme_map_colon <- IHME_data %>%
+  filter(cause == focus_cause4, 
+         measure == "Deaths", 
+         metric == "Rate") %>%
+  group_by(location) %>%
+  summarise(val = mean(val, na.rm = TRUE), .groups="drop")
+
+
+mapdata4 <- world %>%
+  left_join(ihme_map_colon, by = c("name" = "location"))
+
+Colon_cancer <- ggplot(mapdata4) +
+  geom_sf(aes(fill = val), color = "white", size = 0.2) +
+  labs(caption = "Age-standardized death rate for Colon and Rectum cancer",
+       fill = "Rate per 100k") +
+  theme_classic() +
+  theme(
+    plot.caption = element_text(hjust = 0.5, size = 14),  
+    plot.caption.position = "plot")+
+  scale_fill_stepsn(
+  colours = c("#1a9850", "#fee08b", "#d73039"),
+  breaks = c(5, 10, 15, 20, 30, 40, 60), 
+  na.value = "grey90",
+  name = "Rate per 100k"
+)
+```
+
+**Final Visual**
+```{r fig.alt="Four world maps showing age-standardized cancer mortality rates for stomach, lung, colorectal, and breast cancer. Data from the Global Burden of Disease study.", fig.width=13, fig.height=8}
+combined <- ggarrange(Liver_cancer, 
+                              Lung_cancer, 
+                              Colon_cancer, 
+                              Breast_cancer, 
+                              ncol = 2, nrow = 2, 
+                              widths = c(2, 2),     
+                              heights = c(2, 2)
+                              )
+
+final_cancer_map <- annotate_figure(
+  combined,
+  top = text_grob("Global Age-standardized Cancer Mortality Rates", 
+                  size = 18, hjust = 0.5)
+)
+
+final_cancer_map
+```
+
+ 
+- This visualization shows global patterns in age-standardized cancer mortality rates for the top four cancer types: stomach, lung, colorectal, and breast cancer. The data come from the Global Burden of Disease (GBD) study conducted by the Institute for Health Metrics and Evaluation (IHME). Each panel presents a world map shaded by deaths per 100,000 people. The color scale is consistent across all panels: green represents relatively lower mortality, while orange and red indicate relatively higher mortality. Some territories appear in grey, reflecting areas where GBD does not provide data.  
+
+- Some key finding are that lung cancer mortality is especially high in Eastern Europe and East Asia, regions which might relate to smoking rates and air pollution. In contrast, breast cancer mortality is relatively low in wealthier countries with strong screening and treatment programs, but higher in parts of sub-Saharan Africa where access to health care is more limited. 
+
+
+
+

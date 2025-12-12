@@ -1,0 +1,101 @@
+---
+title: "G3_da"
+author: "Gregory Forsberg"
+date: "2025-11-25"
+output: html_document
+---
+
+```{r}
+library(readr)
+library(dplyr)
+library(forcats)
+library(ggplot2)
+library(tidyr)
+library(stringr)
+library(tidyverse)
+library(ggrepel)
+library(scales)
+library(plotly)
+```
+
+```{r}
+ctg <- read_csv("../Data/ctg_clean.csv")
+gbd <- read_csv("../Data/gbd_death.csv")
+
+glimpse(ctg)
+glimpse(gbd)
+```
+
+```{r}
+
+ctg_by_cancer <- ctg %>% 
+  count(Condition_clean, name = "n_trials")
+
+gbd_2019 <- gbd %>% 
+  filter(location == "Global", sex == "Both", age == "All ages", measure == "Deaths", metric == "Number",year == 2023) %>% 
+  select(cause, deaths = val)
+
+trials_gbd <- ctg_by_cancer %>% 
+  inner_join(gbd_2019, by = c("Condition_clean" = "cause"))
+
+p_scatter <- plot_ly(
+  data = trials_gbd,
+  x = ~deaths,
+  y = ~n_trials,
+  type = "scatter",
+  mode = "markers",
+  text = ~Condition_clean,
+  hovertemplate = paste("<b>%{text}</b><br>", "Global deaths: %{x:,.0f}<br>", "Number of trials: %{y}<extra></extra>")) %>% 
+ layout(
+    title = "Clinical Trials vs Global Cancer Deaths (2023)",
+    xaxis = list(
+      title = "Global deaths",
+      type = "log",
+      tickvals = c(1e3, 1e4, 1e5, 1e6, 1e7),
+      ticktext = c("1K", "10K", "100K", "1M", "10M"),
+      ticks = "outside",
+      tickfont = list(size = 11),
+      titlefont = list(size = 14)),
+    yaxis = list(title = "Number of clinical trials"))
+
+p_scatter
+
+```
+
+
+
+```{r}
+gbd_rate <- gbd %>% 
+  filter(location == "Global", sex == "Both", age == "All ages", measure == "Deaths", metric == "Rate")
+
+latest_year <- max(gbd_rate$year, na.rm = TRUE)
+
+top_causes <- gbd_rate %>% 
+  filter(year == latest_year) %>% 
+  slice_max(val, n = 10) %>% 
+  pull(cause)
+
+gbd_top <- gbd_rate %>% 
+  filter(cause %in% top_causes)
+
+p_timeline <- gbd_top %>% 
+  plot_ly(
+    x = ~val,
+    y = ~fct_reorder(cause, val),
+    frame = ~year,
+    type  = "bar",
+    orientation = "h",
+    hovertemplate = paste("<b>%{y}</b><br>", "Year: %{frame}<br>", "Death rate: %{x:.2f}<extra></extra>")) %>% 
+  layout(
+    title = paste0("Global Cancer Death Rates Over Time (Top 10 in ", latest_year, ")"),
+    xaxis = list(title = "Death rate"),
+    yaxis = list(title = "Cancer type"),
+    margin = list(l = 140)) %>% 
+  animation_opts(frame = 500, transition = 0, easing = "linear", redraw = FALSE) %>% 
+  animation_slider( currentvalue = list(prefix = "Year: ")) %>% 
+  animation_button( x = 1, xanchor = "right", y = 0, yanchor = "bottom")
+
+p_timeline
+
+```
+

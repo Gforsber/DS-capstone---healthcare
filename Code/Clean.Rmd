@@ -17,6 +17,7 @@ library(purrr)
 library(tibble)
 library(stringr)
 ```
+
 ```{r}
 ctg_studies <- read_csv("../Data/ctg-studies.csv")
 cancer <- read_csv("Data/cancer.csv")

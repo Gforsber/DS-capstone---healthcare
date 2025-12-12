@@ -20,6 +20,7 @@ world <- ne_countries(scale = "medium", returnclass = "sf")
 head(IHME_data)
 
 ```
+
 ```{r, eval=FALSE}
 unique(world$name)[1:20]  
 unique(IHME_data$location)

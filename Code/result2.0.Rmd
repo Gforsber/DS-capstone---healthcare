@@ -480,6 +480,41 @@ p1 <- ggplot(country_df, aes(x = dalys, y = n_trials, label = country_std)) +
 
 ggsave("../Result/Country-level Clinical Trial.png",p1,width = 15, height = 8, dpi = 600)
 ```
+```{r}
+library(dplyr)
+library(ggplot2)
+library(forcats)   # for fct_reorder
+
+# make a clean copy so we know exactly what we're plotting
+country_rank_clean <- country_rank %>%
+  select(Countries_clean, n_trials, total_target)
+
+# take top 15 by n_trials
+country_top15 <- country_rank_clean %>%
+  arrange(desc(n_trials)) %>%
+  slice_head(n = 10) %>%
+  mutate(
+    Countries_clean = fct_reorder(Countries_clean, n_trials)
+  )
+
+# horizontal bar chart
+p_country <- ggplot(country_top15,
+                    aes(x = n_trials, y = Countries_clean)) +
+  geom_col() +
+  labs(
+    title = "Top 10 Countries by Number of Cancer Clinical Trials",
+    x = "Number of trials",
+    y = "Country"
+  ) +
+  theme_minimal(base_size = 14) +
+  theme(
+    panel.grid.major.y = element_blank(),
+    panel.grid.minor   = element_blank()
+  )
+
+print(p_country)
+ggsave("../Result/Country-level Count.png",p_country,width = 10, height = 6, dpi = 300)
+```
 
 ###SDI
 ```{r}

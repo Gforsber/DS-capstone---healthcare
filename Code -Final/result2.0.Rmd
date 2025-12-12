@@ -4,7 +4,16 @@ output: html_document
 date: "2025-12-08"
 ---
 
-```{r cars}
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+echo = FALSE, message = FALSE, warning = FALSE,
+fig.align = "center", fig.width = 11, fig.height = 6
+)
+```
+
+
+```{r}
 library(ellmer);
 library(tidyverse)
 library(furrr)
@@ -27,9 +36,12 @@ library(forcats)
 gbd_mertic <- read_csv("../Data/gbd_mertic.csv")
 clinic <- read_csv("../Data/clinic2.0.csv")
 ```
-## Scatter
+## Research Question 1
 
-```{r}
+### How do clinical trials address the global disease burden of cancer?
+
+
+```{r echo=TRUE}
 clinic_by_cancer <- clinic %>%
   filter(!is.na(Condition_clean)) %>%
   group_by(Condition_clean) %>%
@@ -39,9 +51,6 @@ clinic_by_cancer <- clinic %>%
     .groups = "drop"
   ) %>%
   mutate(trial_share = n_trials / sum(n_trials))
-
-
-
 make_joined_df <- function(measure_name) {
   gbd_latest <- gbd_mertic %>%
     filter(
@@ -65,8 +74,6 @@ make_joined_df <- function(measure_name) {
       over_rep = trial_share > burden_share   # TRUE = green, FALSE = red
     )
 }
-
-
 
 make_plot <- function(measure_name, title_suffix) {
   df <- make_joined_df(measure_name)
@@ -102,311 +109,31 @@ make_plot <- function(measure_name, title_suffix) {
     )
 }
 
-
-
-
-p_deaths <- make_plot("Deaths", "death")
 p_dalys  <- make_plot("DALYs (Disability-Adjusted Life Years)", "DALY")
-p_prev   <- make_plot("Prevalence", "prevalence")
-p_inc    <- make_plot("Incidence", "incidence")
 
-p_deaths
 p_dalys
-p_prev
-p_inc
-
-
-
-```
-## Bar
-
-```{r}
-
-## DALYs by cancer type (latest year, global, both sexes, all ages)
-gbd_dalys <- gbd_mertic %>%
-  filter(
-    measure  == "DALYs (Disability-Adjusted Life Years)",
-    location == "Global",
-    sex      == "Both",
-    age      == "All ages",
-    metric   == "Number"
-  ) %>%
-  group_by(cause) %>%
-  filter(year == max(year)) %>%
-  ungroup() %>%
-  select(cause, dalys = val)
-
-## Clinical trials by cancer type 
-clinic_sum <- clinic %>%
-  filter(!is.na(Condition_clean)) %>%
-  group_by(Condition_clean) %>%
-  summarise(
-    n_trials      = n_distinct(TrialID),
-    total_target  = sum(target_total, na.rm = TRUE),
-    .groups = "drop"
-  )
-
-## Join DALYs + trials
-df <- gbd_dalys %>%
-  inner_join(clinic_sum, by = c("cause" = "Condition_clean"))
-
-df <- df %>%
-  arrange(dalys) %>%
-  mutate(cause = factor(cause, levels = cause))
-
-df2 <- df %>%
-  mutate(
-    dalys_mill = dalys / 1e6,       # DALYs → millions
-    trials_k   = n_trials / 1e2   
-  ) %>%
-  arrange(dalys_mill) %>%
-  mutate(cause = factor(cause, levels = cause))
-
-plot_df <- df2 %>%
-  select(cause, dalys_mill, trials_k) %>%
-  pivot_longer(
-    cols      = -cause,
-    names_to  = "metric",
-    values_to = "value"
-  ) %>%
-  mutate(
-    value_signed = ifelse(metric == "dalys_mill", -value, value),
-    metric = recode(
-      metric,
-      dalys_mill = "DALYs (millions)",
-      trials_k   = "Trials (hundreds)"
-    )
-  )
-
-p_bar <- ggplot(plot_df, aes(x = value_signed, y = cause, fill = metric)) +
-  geom_col(width = 0.8) +
-  scale_x_continuous(
-    breaks = pretty_breaks(10),
-    labels = function(x) comma(abs(x), accuracy = 1)
-  ) +
-  scale_fill_manual(
-    values = c(
-      "DALYs (millions)" = "grey50",
-      "Trials (hundreds)"   = "#1f78b4"
-    ),
-    name = NULL
-  ) +
-  labs(
-    x = NULL,
-    y = NULL,
-    title = "DALYs vs clinical trial activity by cancer type"
-  ) +
-  coord_cartesian(expand = FALSE) +
-  theme_minimal(base_size = 12) +
-  theme(
-    axis.text.y        = element_text(size = 10),
-    legend.position    = "right",
-    panel.grid.major.y = element_blank()
-  )
-
-p_bar
 
 ```
 
-## Country
-```{r}
-country_rank <- clinic %>%
-  filter(!is.na(Countries_clean)) %>%                    
-  separate_rows(Countries_clean, sep = ";") %>%         
-  mutate(Countries_clean = str_trim(Countries_clean)) %>%
-  group_by(Countries_clean) %>%
-  summarise(
-    n_trials     = n_distinct(TrialID),                  
-    total_target = sum(target_total, na.rm = TRUE),   
-    .groups = "drop"
-  ) %>%
-  arrange(desc(n_trials)) %>%
-  mutate(rank = row_number())
+**Result (DALY-based alignment).**
 
-country_rank
-```
-```{r}
+Clinical trial activity does **not uniformly align** with the global burden of cancer as measured by Disability-Adjusted Life Years (DALYs). The DALY-based trial–burden scatterplot shows substantial dispersion around the line of proportionality, indicating that many cancer types receive either more or fewer trials than expected given their contribution to global cancer DALYs.
+
+While some high-burden cancers—such as tracheal, bronchus, and lung cancer, breast cancer, and colorectal cancer —are relatively well aligned with DALY burden, several cancers with substantial DALY shares, including liver cancer, stomach cancer, and esophageal cancer, are underrepresented in clinical trials.
+
+These findings indicate that global cancer clinical research prioritization is **only partially driven by disease burden**. Factors such as therapeutic feasibility, availability of molecular targets, existing research infrastructure, and pharmaceutical investment likely play a significant role in shaping where trials are conducted. As a result, DALYs alone do not fully predict where clinical research activity is concentrated.
+
+Overall, clinical trials address global cancer burden **imperfectly**: while some major contributors to DALYs receive substantial research attention, notable gaps persist for several high-burden cancers.
+
+## Research Question 2
+### How does socio-demographic index influence clinical trials and the burden of disease?
+
+
+```{r echo=TRUE}
+SDI <- read_csv("../Data/SDI.csv")
 gbd_country <- read_csv("../Data/gbd_country.csv")
 ```
-```{r}
 
-measures_keep <- c("Deaths",
-                   "DALYs (Disability-Adjusted Life Years)",
-                   "Prevalence",
-                   "Incidence")
-
-gbd_country_neoplasm <- gbd_country %>%
-  filter(
-    cause    == "Neoplasms",
-    sex      == "Both",
-    age      == "All ages",
-    metric   == "Number",
-    measure  %in% measures_keep
-  ) %>%
-  group_by(location, measure) %>%
-  filter(year == max(year)) %>%        # latest year per country+measure
-  ungroup() %>%
-  rename(
-    country_gbd = location,
-    burden      = val
-  )
-
-```
-
-```{r}
-clinic_country <- clinic %>%
-  filter(!is.na(Countries_clean)) %>%
-  separate_rows(Countries_clean, sep = ";") %>%
-  mutate(country_trial = str_trim(Countries_clean)) %>%
-  group_by(country_trial) %>%
-  summarise(
-    n_trials     = n_distinct(TrialID),
-    total_target = sum(target_total, na.rm = TRUE),
-    .groups = "drop"
-  )
-
-```
-
-```{r}
-standardize_country <- function(x) {
-  x <- str_trim(x)
-  x_low <- tolower(x)
-  dplyr::recode(
-    x_low,
-    "united states of america" = "united states",
-    .default = x_low
-  )
-}
-
-gbd_country_neoplasm <- gbd_country_neoplasm %>%
-  mutate(country_std = str_to_title(standardize_country(country_gbd)))
-
-clinic_country <- clinic_country %>%
-  mutate(country_std = str_to_title(standardize_country(country_trial)))
-
-```
-
-```{r}
-country_trials_burden <- gbd_country_neoplasm %>%
-  inner_join(
-    clinic_country,
-    by = "country_std"
-  )
-
-```
-
-
-```{r}
-country_trials_burden %>%
-  filter(measure == "DALYs (Disability-Adjusted Life Years)") %>%
-  ggplot(aes(x = burden, y = n_trials, label = country_std)) +
-  geom_point() +
-  geom_text(check_overlap = TRUE, vjust = -0.5, size = 3) +
-  scale_x_log10() +
-  scale_y_log10() +
-  labs(
-    x = "Neoplasm DALYs (log scale)",
-    y = "Number of clinical trials (log scale)",
-    title = "Country-level clinical trials vs neoplasm DALY burden"
-  ) +
-  theme_minimal()
-
-```
-```{r}
-
-measures_keep <- "DALYs (Disability-Adjusted Life Years)"
-
-gbd_cn <- gbd_country %>%
-  filter(
-    cause    == "Neoplasms",
-    sex      == "Both",
-    age      == "All ages",
-    metric   == "Number",
-    measure  %in% measures_keep
-  ) %>%
-  group_by(location, measure) %>%
-  filter(year == max(year)) %>%     # latest year
-  ungroup() %>%
-  rename(
-    country_gbd = location,
-    dalys       = val
-  )
-
-
-
-clinic_cn <- clinic %>%
-  filter(!is.na(Countries_clean)) %>%
-  separate_rows(Countries_clean, sep = ";") %>%
-  mutate(country_trial = str_trim(Countries_clean)) %>%
-  group_by(country_trial) %>%
-  summarise(
-    n_trials = n_distinct(TrialID),
-    total_target = sum(target_total, na.rm = TRUE),
-    .groups = "drop"
-  )
-
-fix_country <- function(x) {
-  x_low <- tolower(trimws(x))
-  recode(
-    x_low,
-    "united states of america" = "united states",
-    "usa" = "united states",
-    "uk"  = "united kingdom",
-    .default = x_low
-  )
-}
-
-gbd_cn <- gbd_cn %>%
-  mutate(country_std = str_to_title(fix_country(country_gbd)))
-
-clinic_cn <- clinic_cn %>%
-  mutate(country_std = str_to_title(fix_country(country_trial)))
-
-write.csv(clinic_cn,"../Data/clinic_cn.csv")
-
-write.csv(gbd_cn,"../Data/gbd_cn.csv")
-
-country_df <- gbd_cn %>%
-  inner_join(clinic_cn, by = "country_std")
-
-```
-### Rank
-```{r}
-
-country_rank_clean <- country_rank %>%
-  select(Countries_clean, n_trials, total_target)
-
-country_top15 <- country_rank_clean %>%
-  arrange(desc(n_trials)) %>%
-  slice_head(n = 10) %>%
-  mutate(
-    Countries_clean = fct_reorder(Countries_clean, n_trials)
-  )
-
-
-p_country <- ggplot(country_top15,
-                    aes(x = n_trials, y = Countries_clean)) +
-  geom_col() +
-  labs(
-    title = "Top 10 Countries by Number of Cancer Clinical Trials",
-    x = "Number of trials",
-    y = "Country"
-  ) +
-  theme_minimal(base_size = 14) +
-  theme(
-    panel.grid.major.y = element_blank(),
-    panel.grid.minor   = element_blank()
-  )
-
-print(p_country)
-ggsave("../Result/Country-level Count.png",p_country,width = 10, height = 6, dpi = 300)
-```
-
-###SDI
-```{r}
-SDI <- read_csv("../Data/SDI.csv")
-glimpse(SDI)
-```
 ```{r}
 SDI_clean <- SDI %>%
   rename(
@@ -416,6 +143,7 @@ SDI_clean <- SDI %>%
   ) %>%
   mutate(country_std = str_to_title(country_sdi))
 ```
+
 ```{r}
 trials_country <- clinic %>%
   filter(!is.na(Countries_clean)) %>%
@@ -434,7 +162,6 @@ trials_country <- clinic %>%
 ```{r}
 trials_with_sdi <- trials_country %>%
   left_join(SDI_clean, by = "country_std")
-
 ```
 
 
@@ -442,9 +169,8 @@ trials_with_sdi <- trials_country %>%
 SDI_missing <- SDI %>%
   filter(is.na(`SDI Quintile`) & !is.na(`2023 SDI Index Value`)) %>%
   select(`Location Name`, `2023 SDI Index Value`)
-SDI_missing
-
 ```
+
 ```{r}
 standardize_country <- function(x) {
   x_utf8 <- iconv(x, from = "", to = "UTF-8")
@@ -486,11 +212,10 @@ SDI_calculated <- SDI %>%
     country_std = standardize_country(country_sdi)
   ) %>%
   select(country_std, SDI_value, SDI_quintile_final)
-
 ```
 
 
-```{r}
+```{r echo=TRUE}
 gbd_country_burden <- gbd_country %>%
   filter(
     sex == "Both",
@@ -532,27 +257,20 @@ trials_country <- trials_country %>%
 ```
 
 
-```{r}
+```{r echo=TRUE}
 SDI_clean_final <- SDI_calculated %>%
   mutate(country_std = str_to_title(country_std)) %>%
   select(country_std, SDI_value, SDI_quintile_final)
 
-
 global_df <- gbd_country_burden %>%
   left_join(trials_country, by = "country_std") %>%
   left_join(SDI_clean_final, by = "country_std")
-```
-
-
-
-```{r}
 
 global_df <- global_df %>%
   mutate(
     mismatch = trial_share / burden_share,
     log2_mismatch = log2(mismatch)  # >0 = overrepresented; <0 = underrepresented
   )
-
 ```
 
 ```{r echo=TRUE}
@@ -574,4 +292,13 @@ SDIClinic
 
 ```
 
+**Result (SDI and trial–burden mismatch).**
+
+There is a clear association between socio-demographic development (SDI) and the alignment between clinical trial activity and cancer burden. Countries with **higher SDI values** tend to have **positive trial–burden mismatch scores**, indicating that they host a larger share of clinical trials relative to their share of global cancer DALYs. In contrast, many **lower-SDI countries** exhibit negative mismatch values, reflecting **underrepresentation in clinical trials** despite substantial disease burden.
+
+The SDI–mismatch scatterplot shows an upward trend: as SDI increases, countries are more likely to be overrepresented in clinical trials. High-SDI countries cluster above the zero line (log₂ mismatch > 0), whereas low- and middle-SDI countries more frequently fall below it.
+
+This pattern suggests that clinical trial activity is strongly influenced by national capacity rather than burden alone. Higher SDI countries generally have greater research infrastructure, regulatory capacity, funding availability, and established academic–industry networks, making them more attractive sites for clinical trials. Meanwhile, lower SDI countries may face structural barriers to trial participation, including limited infrastructure, fewer trained personnel, and underrepresentation in international trial registries.
+
+Socio-demographic development plays a critical role in shaping where cancer clinical trials occur. Even when disease burden is high, countries with lower SDI are less likely to host clinical trials, reinforcing global inequities in access to cancer research and innovation.
 

@@ -19,6 +19,7 @@ library(scales)
 ```{r}
 ctg <- read.csv("../Data/ctg_clean.csv")
 gbd <- read.csv("../Data/gbd_death.csv")
+gbd_daly <- read.csv("../Data/gbd_daly.csv")
 glimpse(gbd)
 glimpse(ctg)
 ```
@@ -180,4 +181,46 @@ ggsave(
   height = 5,
   dpi = 300
 )
+```
+
+```{r}
+# Phase 3 vs. Phase 4
+ctg_phases <- ctg %>%
+  mutate(
+    Phase3 = str_detect(Phases, regex("PHASE3", ignore_case = TRUE)),
+    Phase4 = str_detect(Phases, regex("PHASE4", ignore_case = TRUE))
+  )
+
+phase34_by_cancer <- ctg_phases %>%
+  filter(!is.na(Condition_clean)) %>%  
+  group_by(Condition_clean) %>%
+  summarize(
+    phase3_trials = sum(Phase3, na.rm = TRUE),
+    phase4_trials = sum(Phase4, na.rm = TRUE),
+    total_trials  = n(),
+    .groups = "drop"
+  )
+
+ggplot(phase34_by_cancer,
+       aes(x = phase3_trials, y = phase4_trials, label = Condition_clean)) +
+  geom_point(alpha = 0.7) +
+  geom_abline(slope = 1, intercept = 0, linetype = "dashed") +
+  scale_x_log10(breaks = c(1, 3, 10, 30, 100)) +
+  scale_y_log10(breaks = c(1, 3, 10, 30, 100)) +
+  geom_text_repel(size = 3, max.overlaps = 15) +
+  theme_minimal() +
+  labs(
+    title = "Phase 3 vs Phase 4 Clinical Trials by Cancer Type",
+    subtitle = "Log–log scale, dashed line = equal number of Phase 3 and Phase 4 trials",
+    x = "Number of Phase 3 trials (log scale)",
+    y = "Number of Phase 4 trials (log scale)"
+  )
+
+
+```
+
+```{r}
+
+  
+  
 ```

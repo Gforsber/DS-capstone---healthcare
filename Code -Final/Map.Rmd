@@ -127,7 +127,7 @@ setdiff(ratio_df$country_std, world$name)
 ```
 
 
-**Visual**
+**Ratio Map**
 ```{r}
 world <- ne_countries(returnclass = "sf")
 
@@ -177,6 +177,14 @@ ratio_world_map
 
 ggsave("../Result/Clinical Trial Activity vs. Disease Burden.png",ratio_world_map,  width = 10, height = 5, dpi = 300)
 ```
+
+This map compares each country’s share of global clinical trials to its share of global disease burden. Countries shaded blue (ratios > 1) host more clinical trials than would be expected given their disease burden, while countries in red or orange (ratios < 1) have fewer trials relative to need. Gray indicates missing data or clinical trials from that country.
+
+The map overall suggest a strong global pattern emerges that high-income regions, including the United States, Western Europe, Japan, Australia, and Canada, have more clinical research relative to their share of disease burden.
+
+In contrast, low- and middle-income regions, particularly Sub-Saharan Africa, South Asia, parts of Southeast Asia, and Latin America, tend to have trial shares far below their disease burden. Many of these countries face high levels of morbidity and mortality but remain underrepresented in clinical research activity.
+
+
 **Burden map**
 ```{r}
 daly2 <- daly_ratio_df %>%
@@ -308,4 +316,5 @@ ggsave("../Result/Global Distribution.png",burden_world_map,  width = 10, height
 ```
 
 
+Overall, two maps together highlights a systematic global mismatch between where disease burden is greatest and where clinical trials are conducted. This suggests that current research efforts may not be optimally aligned with global health needs.
 

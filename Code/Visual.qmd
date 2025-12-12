@@ -17,9 +17,14 @@ library(scales)
 ```
 
 ```{r}
+<<<<<<< Updated upstream
 ctg <- read.csv("../Data/ctg_clean.csv")
 gbd <- read.csv("../Data/gbd_death.csv")
 gbd_daly <- read.csv("../Data/gbd_daly.csv")
+=======
+ctg <- read_csv("../Data/ctg_clean.csv")
+gbd <- read_csv("../Data/gbd_death.csv")
+>>>>>>> Stashed changes
 glimpse(gbd)
 glimpse(ctg)
 ```

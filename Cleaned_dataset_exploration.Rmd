@@ -17,7 +17,7 @@ library(treemapify)
 
 #load data
 ```{r}
-totalcancer <- read_csv("Data/IHMEtotalcancer/IHME-GBD_2021_DATA-eae6be09-1.csv")
+totalcancer <- read_csv("Data/IHME-GBD_2021_DATA-eae6be09-1.csv")
 ```
 
 #Data and Viz

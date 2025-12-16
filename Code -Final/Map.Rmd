@@ -315,6 +315,7 @@ setdiff(world$name, daly_ratio_df_clean$country_std)
 ggsave("../Result/Global Distribution.png",burden_world_map,  width = 10, height = 5, dpi = 300)
 ```
 
+This map shows the global distribution of disease burden measured in DALYs, where darker colors indicate countries that carry a higher share of the global disease burden.
 
-Overall, two maps together highlights a systematic global mismatch between where disease burden is greatest and where clinical trials are conducted. This suggests that current research efforts may not be optimally aligned with global health needs.
+Overall, when compare the two maps together, there is a systematic global mismatch between where disease burden is greatest and where clinical trials are conducted. Specifically, most of the countries in Africa and parts of South and Southeast Asia experience high disease burden but host relatively few or no trials, and they are low or mid income countries. This suggests that current research efforts may not be optimally aligned with global health needs.
 

@@ -14,7 +14,8 @@ This project analyzes the misalignment between global cancer research activity (
 2. [Motivation](#Motivation) 
 3. [Folder Structure](#folder-structure)  
 4. [Data Sources](#data-sources)  
-5. [Dependencies](#dependencies)  
+5. [Required R Libraries](#Required-R-Libraries) 
+6. [Dependencies](#dependencies) 
 
 ---
 
@@ -57,6 +58,17 @@ Overall, this work provides a reproducible framework for evaluating research equ
 │   ├── Visual.R
 |   ├── FP4.R                #FP4 central code and report
 |   ├── Exploration.QMD
+
+├── Code- Final/
+│   ├── Captone_final.RMD             # Final report
+
+├── Data-Final/
+│   ├──  clinic_cn.csv      # Cleaned clinical trial data with standardized cancer condition names 
+│   ├──  clinic2.0.csv      # Full, cleaned clinical trials dataset
+│   ├──  gbd_cn.csv          
+│   ├──  gbd_country.csv
+│   ├──  gbd_metric.csv
+│   ├──  SDI.csv
 
 ├── Data/
 │   ├── ctg_clean.csv
@@ -128,6 +140,37 @@ For this project, we specifically use:
 * **Both sexes**
 * **All ages**
 * **Most recent year** available per cancer type
+
+
+---
+
+## Required R Libraries
+
+The following R packages are required to reproduce the data processing, analysis, and visualization in this project:
+
+```r
+library(ellmer)      # LLM-assisted data cleaning and normalization
+library(tidyverse)   # Core data manipulation and visualization
+library(furrr)       # Parallel processing with purrr
+library(kableExtra)  # Publication-quality tables
+library(jsonlite)    # JSON parsing and handling
+library(dplyr)       # Data wrangling
+library(readr)       # Reading CSV files
+library(httr2)       # API requests
+library(purrr)       # Functional programming tools
+library(tibble)      # Tidy data frames
+library(stringr)     # String manipulation
+library(scales)      # Axis and scale formatting
+library(ggpubr)      # Publication-ready ggplot extensions
+library(ggrepel)     # Non-overlapping text labels
+library(forcats)     # Factor handling
+```
+
+### Notes
+
+* All analyses were conducted in **R** using tidyverse-based workflows.
+* Parallelization (`furrr`) was used for large-scale data processing tasks.
+* Visualization libraries support publication-quality figures for the final report.
 
 
 ---

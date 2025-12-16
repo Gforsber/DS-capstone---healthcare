@@ -52,6 +52,11 @@ library(scales)
 library(ggpubr)
 library(ggrepel)
 library(forcats) 
+library(ggplot2)
+library(sf)
+library(countrycode)
+library(rnaturalearth)
+library(rnaturalearthdata)
 ```
 
 
@@ -135,6 +140,270 @@ make_plot <- function(measure_name, title_suffix) {
 p_dalys  <- make_plot("DALYs (Disability-Adjusted Life Years)", "DALY")
 
 p_dalys
+
+```
+
+
+```{r echo=TRUE}
+gbd_cn <- read_csv("../Data/gbd_cn.csv")
+
+clinic_cn <- read_csv("../Data/clinic_cn.csv")
+
+```
+
+```{r echo=TRUE}
+
+ratio_df <- gbd_cn %>%
+  inner_join(clinic_cn, by = c("country_std" = "country_std")) %>%
+  mutate(
+    total_trials      = sum(n_trials, na.rm = TRUE),
+    total_daly      = sum(dalys, na.rm = TRUE),
+    trials_ratio      = n_trials / total_trials,
+    daly_ratio       = dalys / total_daly,
+    ratio             = trials_ratio / daly_ratio
+    ) %>%
+  
+  select(country_std, dalys, n_trials, total_trials, total_daly, daly_ratio, trials_ratio, ratio)
+  
+```
+
+```{r}
+world <- ne_countries(scale = "medium", returnclass = "sf")
+
+ratio_df <- ratio_df %>%
+  mutate(
+    country_std = recode(country_std,
+      "United States"               = "United States of America",
+      "United Republic Of Tanzania" = "Tanzania",
+      "Viet Nam"                    = "Vietnam",
+      "Russian Federation"          = "Russia",
+      "Republic Of Korea"           = "South Korea",                  
+      "Western Sahara" = "W. Sahara",
+      "Laos" = "Lao PDR",
+      "Palestine" = "Palestinian Territories",
+      "Eq. Guinea" = "Equatorial Guinea",
+      "N. Cyprus" = "Northern Cyprus",
+      "Côte d'Ivoire" = "Ivory Coast",
+      "Dem. Rep. Congo" = "Democratic Republic of the Congo",
+      "Congo" = "Republic of the Congo",
+      "Macao" = "Macau",
+      "Indian Ocean Ter." = "British Indian Ocean Territory",
+      "Heard I. and McDonald Is." = "Heard Island and McDonald Islands",
+      "Ashmore and Cartier Is." = "Ashmore and Cartier Islands",
+      "Antigua and Barb." = "Antigua and Barbuda", "Fiji" = "Fiji",
+    "Papua New Guinea" = "Papua New Guinea",
+    "Democratic Republic of the Congo" = "Dem. Rep. Congo",
+  
+    "Falkland Islands" = "Falkland Is.",
+    "French Southern Territories" = "Fr. S. Antarctic Lands",
+    "Bolivia (Plurinational State of)" = "Bolivia",
+  
+    "Venezuela (Bolivarian Republic of)" = "Venezuela",
+   
+    "Cote d'Ivoire" = "Côte d'Ivoire",
+  
+  
+    "Central African Republic" = "Central African Rep.",
+    "Republic of the Congo" = "Congo",
+    "Equatorial Guinea" = "Eq. Guinea",
+    "Eswatini" = "eSwatini",
+    "State of Palestine" = "Palestine",
+    
+    "Lao People's Democratic Republic" = "Laos",
+  
+    "Democratic People’s Republic of Korea" = "North Korea",
+  
+ 
+    "Iran (Islamic Republic of)" = "Iran",
+    "Syrian Arab Republic" = "Syria",
+    "Republic of Moldova" = "Moldova",
+    "Türkiye" = "Turkey",
+    "New Caledonia" = "New Caledonia",
+    "Solomon Islands" = "Solomon Is.",
+    
+    "Brunei Darussalam" = "Brunei",
+  
+
+    "Northern Cyprus" = "N. Cyprus",
+   
+
+    "South Sudan" = "S. Sudan",
+    "Bosnia and Herzegovina" = "Bosnia and Herz.",
+    "Republic Of Korea"      = "South Korea",
+    "Republic of Korea"      = "South Korea", 
+    "Dominican Republic" = "Dominican Rep."
+    )
+  )
+
+```
+
+```{r echo=TRUE}
+world_sf <- ne_countries(returnclass = "sf")
+
+
+map_df <- world_sf %>%
+  left_join(ratio_df, by = c("name" = "country_std")) %>%   # change keys if needed
+  mutate(ratio_cat = cut(
+    ratio,
+    breaks = c(-Inf, 0.25, 0.5, 1, 2, Inf),
+    labels = c("<0.25", "0.25–0.5", "0.5–1", "1–2", ">2")
+  ))
+
+# Define a diverging palette that highlights >1 clearly
+ratio_colors <- c(
+   "<0.25" = "#d7191c",
+    "0.25–0.5" = "#fdae61",
+    "0.5–1" = "#ffffbf",
+    "1–2" = "#91B5F2",
+    ">2" = "#2b83ba",
+    "NA" = "grey80"
+)
+
+ratio_world_map <- ggplot(map_df) +
+  geom_sf(aes(fill = ratio_cat), color = "white", size = 0.2) +
+  coord_sf(expand = FALSE) +
+  scale_fill_manual(
+    values = ratio_colors,
+    drop = FALSE,
+    name = "Trial share / Burden share"
+  ) +
+  labs(
+    title = "Clinical Trial Activity vs. Disease Burden",
+    caption = "Countries with ratios > 1 have more clinical trials\nrelative to their share of disease burden."
+  ) +
+  theme_void() +
+  theme(
+    axis.title  = element_blank(),
+    axis.text   = element_blank(),
+    axis.ticks  = element_blank(),
+    plot.caption = element_text(hjust = 0.5, size = 8),
+    plot.caption.position = "plot",
+    legend.title = element_text(size = 8),
+    legend.text  = element_text(size = 9)
+  )
+
+
+ratio_world_map
+
+```
+
+
+```{r}
+daly_ratio_df <- gbd_cn %>%
+  mutate(
+    total_daly      = sum(dalys, na.rm = TRUE),
+    daly_ratio       = dalys / total_daly,
+    ) %>%
+  
+  select(country_std, dalys, total_daly, daly_ratio)
+
+daly_ratio_df_clean <- daly_ratio_df %>%
+  mutate(country_std = recode(country_std,
+      "United States"               = "United States of America",
+      "United Republic Of Tanzania" = "Tanzania",
+      "Viet Nam"                    = "Vietnam",
+      "Russian Federation"          = "Russia",
+      "Republic Of Korea"           = "South Korea",                  
+      "Western Sahara" = "W. Sahara",
+      "Laos" = "Lao PDR",
+      "Eq. Guinea" = "Equatorial Guinea",
+      "N. Cyprus" = "Northern Cyprus",
+
+  
+      "Macao" = "Macau",
+      "Indian Ocean Ter." = "British Indian Ocean Territory",
+      "Heard I. and McDonald Is." = "Heard Island and McDonald Islands",
+      "Ashmore and Cartier Is." = "Ashmore and Cartier Islands",
+      "Antigua and Barb." = "Antigua and Barbuda", "Fiji" = "Fiji",
+ 
+   
+    "Falkland Islands" = "Falkland Is.",
+    "French Southern Territories" = "Fr. S. Antarctic Lands",
+    "Bolivia (Plurinational State of)" = "Bolivia",
+  
+    "Venezuela (Bolivarian Republic of)" = "Venezuela",
+  
+  
+  
+    "Central African Republic" = "Central African Rep.",
+  
+    "Equatorial Guinea" = "Eq. Guinea",
+    "Eswatini" = "eSwatini",
+    "State of Palestine" = "Palestine",
+    
+    "Lao People's Democratic Republic" = "Laos",
+  
+  
+ 
+    "Iran (Islamic Republic of)" = "Iran",
+    "Syrian Arab Republic" = "Syria",
+
+    "Türkiye" = "Turkey",
+    "New Caledonia" = "New Caledonia",
+    "Solomon Islands" = "Solomon Is.",
+    
+    "Brunei Darussalam" = "Brunei",
+  
+
+    "Northern Cyprus" = "N. Cyprus",
+   
+
+    "South Sudan" = "S. Sudan",
+   
+    "Republic Of Korea"      = "South Korea",
+    "Republic of Korea"      = "South Korea", 
+    "Dominican Republic" = "Dominican Rep.", 
+    
+      "Democratic Republic Of The Congo"      = "Dem. Rep. Congo",
+      "Republic of the Congo"                 = "Congo",
+      "Bosnia And Herzegovina"                = "Bosnia and Herz.",
+      "Iran (Islamic Republic Of)"            = "Iran",
+      "Republic Of Moldova"                   = "Moldova",
+      "Sao Tome And Principe"                 = "Sao Tome and Principe",
+      "Trinidad And Tobago"                   = "Trinidad and Tobago",
+      "Democratic People's Republic Of Korea" = "North Korea",
+      "Bolivia (Plurinational State Of)"      = "Bolivia",
+      "Venezuela (Bolivarian Republic Of)"    = "Venezuela",
+      "Côte D'ivoire"                         = "Côte d'Ivoire",
+      "Cabo Verde"                            = "Cape Verde",
+      "Micronesia (Federated States Of)"      = "Micronesia",
+      "Palestinian Territories"               = "Palestine"
+
+
+    
+  ))
+
+burden_map_df <- world %>%
+  left_join(daly_ratio_df_clean, by = c("name" = "country_std"))
+```
+
+```{r echo=TRUE}
+
+burden_world_map <- ggplot(burden_map_df) +
+  geom_sf(aes(fill = daly_ratio), color = "white", size = 0.2) +
+  coord_sf(expand = FALSE) +
+  scale_fill_gradientn(
+  colors = c("#e0ecf4", "#9ebcda", "#8c6bb1", "#88419d", "#6e016b"),
+  trans = "sqrt",
+  labels = percent_format(accuracy = 0.1),
+  name = "Share of global\nDALY burden"
+  ) +
+  labs(
+    title   = "Global Distribution of Disease Burden (DALYs)",
+    caption = "Darker colors indicate countries with a higher share of global DALY burden."
+  ) +
+  theme_void() +
+  theme(
+    axis.title  = element_blank(),
+    axis.text   = element_blank(),
+    axis.ticks  = element_blank(),
+    plot.caption = element_text(hjust = 0.5, size = 8),
+    plot.caption.position = "plot",
+    legend.title = element_text(size = 8),
+    legend.text  = element_text(size = 9)
+  )
+
+burden_world_map
 
 ```
 

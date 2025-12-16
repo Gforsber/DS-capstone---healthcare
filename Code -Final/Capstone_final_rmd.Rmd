@@ -5,437 +5,337 @@ date: "2025-12-12"
 output: html_document
 ---
 
-#Topic Introduction
+## Topic Introduction
+Project Title: Clinical Trials vs Disease Burden (Neoplasms)
+Gregory, Khalessi, Scarlett
+
+For this project, we are looking into how clinical trials around the world are addressing the global burden of disease, focusing on cancer/neoplasms. 
+
+## Motivations and Research Question
+Our focus for this final project is centered around looking into how the global burden of disease is being addressed by clinical trials around the world. With cancer being a world-wide health issue, the estimated number of cancer cases world-wide is expected to grow to around 35 million by 2050. Which such a high number, it is paramount to human health that cancer research continues to discover cancer treatments for all types. Because challenging complex medical diseases is extremely expensive, certain types of cancer research receives more funding either to do better publicity or larger effect group. This can lead to an imbalance of research for the "understudied" cancer types which still remain extremely deadly. As a result, our research questions aim to directly address this issues of, How does clinical research around the world address known disease burdens? In other words, we are asking, how do the number/type of clinical trials address the current need for treatments among known diseases that effect many people. 
+
+## Data sources
+1) Global Burden of Disease Study (GBD)
+
+This annual study is produced by the Institute for Health Metrics and Evaluation and combines millions of health statistics from organizations around the world into a large, centralized report. For this project, the dataset provides global information on cancer mortality and disease burden across countries using mortality rates and disability-adjusted life years (DALYs) over time, from 1980 to the present. The data were obtained in CSV format through the GBD interactive dashboard, where query filters were used to select the desired statistics and years. The dataset required minimal additional cleaning.
+
+2) ClinicalTrials.gov
+
+ClinicalTrials.gov is a publicly accessible registry of clinical trials maintained by the National Institutes of Health (NIH). It serves as a centralized database for both interventional and observational clinical studies conducted worldwide and includes information on study location, disease focus, enrollment size, study phase, and trial status. The data from this source were highly unstructured for the purposes of our analysis, which required the use of a large language model (LLM) to standardize trial types based on study titles.
+
+3) WHO International Clinical Trials Registry Platform (ICTRP)
+
+The World Health Organization’s International Clinical Trials Registry Platform (ICTRP) stores clinical trial records from national and regional registries around the world. Data from this registry were used as a supplement to the NIH ClinicalTrials.gov dataset to improve coverage and transparency of clinical trials across both databases.
 
 
-#Movation and research question
-Our current focus for our project is centered around looking into how global burden of disease is being addressed by clinical trials around the world. Different center types have different amount of funding which heavily influence there development to create a successful treatment to said cancer, with many under funded types of cancer having significant less amount of funding for research. As a result, our current research question is: How does clinical research around the world address known disease burdens? Is there sufficient research to address the health issues?
-
-#Data sources
-Include a description of the datasets you use, along with an example of the relevant fields in them, a description of how you clean them, and their relationship to each other (e.g. how they are joined).
-
-- ClinicalTrials.gov — Global Interventional Cancer Trials: Central repository for interventional and observational trials; includes study design, enrollment, and outcomes
-- IHME Global Burden of Disease (GBD) — Global Cancer DALYs: Provides global epidemiological data on mortality, morbidity, and risk factors across countries and disease categories
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+echo = FALSE, message = FALSE, warning = FALSE,
+fig.align = "center", fig.width = 11, fig.height = 6
+)
+```
 
 
-
-#Ethics
-Over all, our goal is to minimize any people who might be hurt by this study. After conversations with our experts, they push us to both make our data accessible to all people and to look into cancer types that effect lower income countries who might not have the awareness to gain more funding to further research cancer types that they are more effected by. We understand that the nature of clinical trials is very specific and that not all people can be candidates for the trials, thus we are looking at it more from a developmental standard and hope that these trials will progress into common proven treatments for millions of people. 
-
-
-#Ai Useage
-Some ai was used to improve visuals such as color scale and themes, it was also used to scrape data from the cdc clinical trials website. 
-
-
-#loading packages
 ```{r}
-library(readr)
-library(dplyr)
-library(tidyr)
-library(stringr)
+library(ellmer);
 library(tidyverse)
-library(lubridate)
-library(ggplot2)
-library(ggrepel)
+library(furrr)
+library(kableExtra);
+library(jsonlite)
+library(dplyr)
+library(readr)
+library(httr2)
+library(purrr)
+library(tibble)
+library(stringr)
 library(scales)
-library(treemapify)
 library(ggpubr)
-library(forcats)
-library(sf)
-library(countrycode)
-library(rnaturalearth)
-library(rnaturalearthdata)
-library(ineq)
+library(ggrepel)
+library(forcats) 
 ```
 
-#loading in data
-- ClinicalTrials.gov — Global Interventional Cancer Trials: Central repository for interventional and observational trials; includes study design, enrollment, and outcomes
-- IHME Global Burden of Disease (GBD) — Global Cancer DALYs: Provides global epidemiological data on mortality, morbidity, and risk factors across countries and disease categories
-```{r}
-totalcancer <- read_csv("../Data/IHME-GBD_2021_DATA-eae6be09-1.csv")
-clean_scrape_data <- read.csv("../Data/ctg_clean.csv")
-world <- ne_countries(scale = "medium", returnclass = "sf")
-cancerdaly <- read_csv("../Data/IHME-GBD_2021_DATA-12473b24-1.csv")
+
+```{r pressure, echo=FALSE}
+gbd_mertic <- read_csv("../Data/gbd_mertic.csv")
+clinic <- read_csv("../Data/clinic2.0.csv")
 ```
-#Gregory
-```{r}
-total_by_year <- totalcancer %>%
-  filter(metric == "Number", measure == "Deaths") %>%  
-  group_by(year, cause) %>%
-  summarise(total = sum(val, na.rm = TRUE), .groups = "drop")
+## Research Question 1
 
-top_causes <- total_by_year %>%
-  group_by(cause) %>%
-  summarise(overall_total = sum(total, na.rm = TRUE), .groups = "drop") %>%
-  slice_max(overall_total, n = 10) %>%   
-  pull(cause)
+### How do clinical trials address the global disease burden of cancer?
 
-top_cancers_only <- total_by_year %>%
-  filter(cause %in% top_causes)
 
-ggplot(top_cancers_only, aes(x = year, y = total, color = cause)) +
-  geom_line(size = 1) +
-  labs(title = "Cancer Types by Total Deaths Over Time (Top 10)",
-       x = "Year", y = "Total Deaths", color = "Cancer Type") +
-    scale_y_continuous(labels = comma) +
-  theme_minimal()
-
-ct_count <- clean_scrape_data %>% 
-  group_by(Condition_clean) %>% 
-  summarize(count = n()) %>% 
-  arrange(desc(count)) %>% 
-  slice_head(n = 10)
-
-ggplot(ct_count,aes(reorder(Condition_clean, count), count))+
-  geom_col()+
-  theme_minimal()+
-  labs(x = "Clinical trial targeted Condition")+
-  theme(axis.text.x = element_text(angle = 45, hjust = 1, size = 6)) 
-
-latest_year <- max(totalcancer$year, na.rm = TRUE)
-
-global_latest <- totalcancer %>%
-  filter(location == "Global", metric == "Number", measure == "Deaths", age == "All ages", sex == "Both", year == latest_year) %>%
-  group_by(cause) %>%
-  summarise(total_deaths = sum(val, na.rm = TRUE), .groups = "drop") %>%
-  arrange(desc(total_deaths)) %>%
-  slice_head(n = 15)
-
-ggplot(global_latest, aes(x = reorder(cause, total_deaths), y = total_deaths)) +
-  geom_col(fill = "blue") +
-  coord_flip() +
-  labs(title = paste("Top 15 Global Cancer Deaths in", latest_year), x = "Cancer Type", y = "Total Deaths") +
-  theme_minimal()
-
-global_trend <- totalcancer %>%
-  filter(location == "Global", metric == "Number", measure == "Deaths", age == "All ages", sex == "Both") %>%
-  group_by(year) %>%
-  summarise(total_deaths = sum(val, na.rm = TRUE), .groups = "drop")
-
-ggplot(global_trend, aes(x = year, y = total_deaths)) +
-  geom_line(size = 1.2, color = "red") +
-  geom_point(color = "darkred") +
-  labs(title = "Total Global Cancer Deaths Over Time", x = "Year", y = "Total Deaths") +
-  theme_minimal()
-
-rate_dalys_trend <- cancerdaly %>%
-  filter(location_name == "America",
-         measure_name == "DALYs (Disability-Adjusted Life Years)",
-         metric_name == "Rate", #100,000?
-         sex_name == "Both",
-         age_name == "All ages",
-         cause_name != "Neoplasms") %>%
-  group_by(year) %>%
-  summarise(avg_daly_rate = mean(val, na.rm = TRUE), .groups = "drop")
-
-ggplot(rate_dalys_trend, aes(x = year, y = avg_daly_rate)) +
-  geom_line(color = "darkgreen", size = 1.2) +
-  geom_point(color = "green") +
-  labs(title = "Cancer DALY Rate per 100k (America)",
-       x = "Year", y = "DALYs per 100,000") +
-  theme_minimal()
-```
-1) This visualization shows the death rate (per 100,000) by cancer type from 1980 to 2021 for the top ten causes of cancer deaths. The x-axis displays the year, and the y-axis shows the total death counts, with each colored line representing the different cancer types. This visualization address one of our research questions being: How have global cancer death rates changed over time? Understanding these important trends help drive public health and policy efforts and future medical research in treating cancer.
-
-The highest death rate during this period is for tracheal, bronchus, and lung cancer which peaked in about the 1990s and has since slowly declined. This could be a result of a decrease in smoking among younger populations and/or advancement made in medicine to treat this type of cancer. Stomach cancer shows a significant and consistent decline, while most other cancer types remained stable or trend downward, though more gradually. These patterns reflect a variety of different factors such as medical advancements, changes in societal habits, and preventative care initiatives.
-
-2) Graph looks at the raw totals of clinical trials based off the types of neoplasm that they target.
-
-3) Graph looks at the global cancer death rates for top 15 cancer deaths in 2021.
-
-4) Graph looks at the total global cancer deaths over time from 2012 to 2021.
-
-5) Graph DALY rate per 100k from 2012 to 2021 within america for cancer.
-
-#Khalessi
-Has done a great amount of work on our llm to scrape the data from the clinical gov website. The code for the llm is in the code file titled "Clean.RMD". It isn't included in this rmd so that we don't re-run the llm. 
-```{r}
-ctg <- read.csv("../Data/ctg_clean.csv")
-gbd <- read.csv("../Data/gbd_death.csv")
-```
-
-```{r}
-trial_by_cancer <- ctg %>%
-  count(Condition_clean, name = "trial_count")
-
-gbd_latest <- gbd %>%
-  filter(
-    location == "Global",
-    sex == "Both",
-    metric == "Number",     
-    measure == "Deaths",
-    year == max(year)
+```{r echo=TRUE}
+clinic_by_cancer <- clinic %>%
+  filter(!is.na(Condition_clean)) %>%
+  group_by(Condition_clean) %>%
+  summarise(
+    n_trials     = n_distinct(TrialID),
+    total_target = sum(target_total, na.rm = TRUE),
+    .groups = "drop"
   ) %>%
-  select(cause, death_number = val)
+  mutate(trial_share = n_trials / sum(n_trials))
+make_joined_df <- function(measure_name) {
+  gbd_latest <- gbd_mertic %>%
+    filter(
+      measure  == measure_name,
+      location == "Global",
+      sex      == "Both",
+      age      == "All ages",
+      metric   == "Number"
+    ) %>%
+    group_by(cause) %>%
+    filter(year == max(year)) %>%
+    ungroup() %>%
+    select(cause, val)
 
-compare_df <- trial_by_cancer %>%
-  inner_join(gbd_latest, by = c("Condition_clean" = "cause")) %>%
+  gbd_latest <- gbd_latest %>%
+    mutate(burden_share = val / sum(val))
+
+  clinic_by_cancer %>%
+    inner_join(gbd_latest, by = c("Condition_clean" = "cause")) %>%
+    mutate(
+      over_rep = trial_share > burden_share   # TRUE = green, FALSE = red
+    )
+}
+
+make_plot <- function(measure_name, title_suffix) {
+  df <- make_joined_df(measure_name)
+
+  ggplot(df, aes(x = burden_share, y = trial_share)) +
+    geom_abline(slope = 1, intercept = 0,
+                linetype = "dashed", color = "grey50") +
+    geom_point(aes(color = over_rep, size = n_trials), alpha = 0.8) +
+    geom_text_repel(
+      aes(label = Condition_clean),
+      size = 3,
+      max.overlaps = Inf,   
+      box.padding = 0.3,
+      point.padding = 0.2,
+      segment.color = "grey60"
+    ) +
+    scale_x_log10(labels = scales::percent_format(accuracy = 0.01)) +
+    scale_y_log10(labels = scales::percent_format(accuracy = 0.01)) +
+    scale_color_manual(
+      values = c("FALSE" = "red", "TRUE" = "darkgreen"),
+      labels = c("Underrepresented", "Overrepresented"),
+      name   = NULL
+    ) +
+    labs(
+      x = paste0(title_suffix, " share"),
+      y = "Clinical trial share",
+      title = paste("Clinical trial share vs", title_suffix, "by cancer type")
+    ) +
+    theme_minimal() +
+    theme(
+      legend.position = "bottom",
+      plot.title = element_text(face = "bold")
+    )
+}
+
+p_dalys  <- make_plot("DALYs (Disability-Adjusted Life Years)", "DALY")
+
+p_dalys
+
+```
+
+**Result (DALY-based alignment).**
+
+Clinical trial activity does **not uniformly align** with the global burden of cancer as measured by Disability-Adjusted Life Years (DALYs). The DALY-based trial–burden scatterplot shows substantial dispersion around the line of proportionality, indicating that many cancer types receive either more or fewer trials than expected given their contribution to global cancer DALYs.
+
+While some high-burden cancers—such as tracheal, bronchus, and lung cancer, breast cancer, and colorectal cancer —are relatively well aligned with DALY burden, several cancers with substantial DALY shares, including liver cancer, stomach cancer, and esophageal cancer, are underrepresented in clinical trials.
+
+These findings indicate that global cancer clinical research prioritization is **only partially driven by disease burden**. Factors such as therapeutic feasibility, availability of molecular targets, existing research infrastructure, and pharmaceutical investment likely play a significant role in shaping where trials are conducted. As a result, DALYs alone do not fully predict where clinical research activity is concentrated.
+
+Overall, clinical trials address global cancer burden **imperfectly**: while some major contributors to DALYs receive substantial research attention, notable gaps persist for several high-burden cancers.
+
+## Research Question 2
+### How does socio-demographic index influence clinical trials and the burden of disease?
+
+```{r echo=TRUE}
+SDI <- read_csv("../Data/SDI.csv")
+gbd_country <- read_csv("../Data/gbd_country.csv")
+```
+
+```{r}
+SDI_clean <- SDI %>%
+  rename(
+    country_sdi = `Location Name`,
+    SDI_value = `2023 SDI Index Value`,
+    SDI_quintile = `SDI Quintile`
+  ) %>%
+  mutate(country_std = str_to_title(country_sdi))
+```
+
+```{r}
+trials_country <- clinic %>%
+  filter(!is.na(Countries_clean)) %>%
+  separate_rows(Countries_clean, sep = ";") %>%
+  mutate(country = str_trim(Countries_clean),
+         country_std = str_to_title(country)) %>%
+  group_by(country_std) %>%
+  summarise(
+    n_trials = n_distinct(TrialID),
+    total_target = sum(target_total, na.rm = TRUE),
+    .groups = "drop"
+  )
+
+```
+
+```{r}
+trials_with_sdi <- trials_country %>%
+  left_join(SDI_clean, by = "country_std")
+```
+
+
+```{r}
+SDI_missing <- SDI %>%
+  filter(is.na(`SDI Quintile`) & !is.na(`2023 SDI Index Value`)) %>%
+  select(`Location Name`, `2023 SDI Index Value`)
+```
+
+```{r}
+standardize_country <- function(x) {
+  x_utf8 <- iconv(x, from = "", to = "UTF-8")
+  x_low <- tolower(str_trim(x_utf8))
+  case_when(
+    x_low %in% c("united states", "united states of america", "usa", "u.s.a.") ~ "United States",
+    x_low %in% c("united kingdom", "uk", "u.k.")                               ~ "United Kingdom",
+    x_low %in% c("russian federation", "russia")                               ~ "Russia",
+    x_low %in% c("iran (islamic republic of)", "iran")                         ~ "Iran",
+    x_low %in% c("viet nam", "vietnam")                                        ~ "Vietnam",
+    TRUE                                                                       ~ str_to_title(x_low)
+  )
+}
+```
+
+
+
+```{r}
+SDI_calculated <- SDI %>%
+  rename(
+    country_sdi  = `Location Name`,
+    SDI_value    = `2023 SDI Index Value`,
+    SDI_quintile = `SDI Quintile`
+  ) %>%
   mutate(
-    total_trials      = sum(trial_count, na.rm = TRUE),
-    total_deaths      = sum(death_number, na.rm = TRUE),
-    trials_share      = trial_count / total_trials,
-    death_share       = death_number / total_deaths,
-    ratio             = trials_share / death_share,
-    status            = if_else(ratio < 1, "Under-studied", "Over-studied")
+    SDI_quintile_new = case_when(
+      SDI_value < 0.46 ~ "Low SDI",
+      SDI_value < 0.59 ~ "Low-middle SDI",
+      SDI_value < 0.69 ~ "Middle SDI",
+      SDI_value < 0.78 ~ "High-middle SDI",
+      SDI_value >= 0.78 ~ "High SDI",
+      TRUE ~ NA_character_
+    ),
+    SDI_quintile_final = ifelse(
+      is.na(SDI_quintile),
+      SDI_quintile_new,
+      SDI_quintile
+    ),
+    country_std = standardize_country(country_sdi)
+  ) %>%
+  select(country_std, SDI_value, SDI_quintile_final)
+```
+
+
+```{r echo=TRUE}
+gbd_country_burden <- gbd_country %>%
+  filter(
+    sex == "Both",
+    age == "All ages",
+    metric == "Number",
+    measure == "DALYs (Disability-Adjusted Life Years)"
+  ) %>%
+  group_by(location) %>%
+  filter(year == max(year)) %>%
+  summarise(
+    dalys = val,
+    .groups = "drop"
+  ) %>%
+  mutate(country_std = str_to_title(location))
+
+total_global_dalys <- sum(gbd_country_burden$dalys)
+
+gbd_country_burden <- gbd_country_burden %>%
+  mutate(burden_share = dalys / total_global_dalys)
+
+gbd_country_burden <- gbd_country_burden %>%
+  mutate(country_std = standardize_country(location))
+
+trials_country <- clinic %>%
+  filter(!is.na(Countries_clean)) %>%
+  separate_rows(Countries_clean, sep = ";") %>%
+  mutate(country_std = str_to_title(str_trim(Countries_clean))) %>%
+  group_by(country_std) %>%
+  summarise(
+    n_trials = n_distinct(TrialID),
+    total_target = sum(target_total, na.rm = TRUE),
+    .groups = "drop"
+  )
+
+total_trials_global <- sum(trials_country$n_trials)
+
+trials_country <- trials_country %>%
+  mutate(trial_share = n_trials / total_trials_global)
+```
+
+
+```{r echo=TRUE}
+SDI_clean_final <- SDI_calculated %>%
+  mutate(country_std = str_to_title(country_std)) %>%
+  select(country_std, SDI_value, SDI_quintile_final)
+
+global_df <- gbd_country_burden %>%
+  left_join(trials_country, by = "country_std") %>%
+  left_join(SDI_clean_final, by = "country_std")
+
+global_df <- global_df %>%
+  mutate(
+    mismatch = trial_share / burden_share,
+    log2_mismatch = log2(mismatch)  # >0 = overrepresented; <0 = underrepresented
   )
 ```
 
-```{r}
-p1 <- ggplot(compare_df, aes(x = death_share, y = trials_share, label = Condition_clean)) +
-  geom_point(aes(size = trial_count, color = status), alpha = 0.85) +
-  geom_abline(slope = 1, intercept = 0, linetype = "dashed", color = "gray40") +
-  geom_text_repel(max.overlaps = 12, size = 3) +
-  scale_x_log10(labels = percent_format(accuracy = 0.01)) +
-  scale_y_log10(labels = percent_format(accuracy = 0.01)) +
-  scale_color_manual(
-    values = c("Under-studied" = "#E74C3C", "Over-studied" = "#2E8B57"),
-    name = "Research Attention"
-  ) +
-  scale_size_continuous(name = "Trial count") +
+```{r echo=TRUE}
+SDIClinic <- ggplot(global_df,
+       aes(x = SDI_value, y = log2_mismatch,
+           color = SDI_quintile_final, label = country_std)) +
+  geom_hline(yintercept = 0, linetype = "dashed", color = "grey50") +
+  geom_point(size = 3, alpha = 0.8) +
+  geom_text_repel(max.overlaps = 18, size = 3) +
   labs(
-    title = "Clinical Trial Share vs. Death Share by Cancer Type",
-    subtitle = "Using global number of deaths (GBD)  — log-scaled shares",
-    x = "Death share (proportion of total cancer deaths)",
-    y = "Trial share (proportion of total cancer trials)"
+    title = "Global Relationship Between SDI and Cancer Trial–Burden Mismatch",
+    subtitle = "log2(trial_share / burden_share): values < 0 = under-represented; values > 0 = over-represented",
+    x = "Socio-Demographic Index (SDI)",
+    y = "Mismatch Index (log2 ratio)"
   ) +
-  theme_minimal(base_size = 13)
-p1
-```
-
-- This graph compares how many clinical trials each cancer type receives (y-axis) with how much global mortality it causes (x-axis). Both axes use log scales. The dashed diagonal line represents a 1:1 ratio, where a cancer gets research attention proportional to its death burden. The Green points represent the well-studied or over-studied cancers, which are those with more trials than expected relative to how many people they kill. Red points represent under-studied cancers, which are those with fewer trials than expected given their mortality burden. Point size shows the number of trials (larger = more trials).
-
-
-```{r}
-library(lubridate)
-
-p2 <- ctg %>%
-  mutate(Year = year(ym(str_sub(`Start.Date`, 1, 7)))) %>%
-  count(Year) %>%
-  ggplot(aes(x = Year, y = n)) +
-  geom_line(color = "#E69F00", linewidth = 1) +
-  scale_x_continuous(
-    limits = c(1970, 2025),        # 👈 force scale to end at 2025
-    breaks = seq(1970, 2025, by = 5)
-  ) +
-  labs(
-    title = "Growth of Cancer Clinical Trials (1970–2025)",
-    x = "Year of trial start",
-    y = "Number of new trials"
-  ) +
-  theme_minimal(base_size = 13)
-
-p2
-```
-
-- This graph shows how the number of new cancer clinical trials has grown over time. From 1970 to the early 1990s, very few trials were launched each year. Starting in the mid-1990s, trial activity increased sharply, and by the 2000s the growth became exponential. Today, we see more than 600 new cancer trials being initiated each year.
-
-#Scarlett
-```{r}
-#data
-IHME_data <- read_csv("../Data/IHME_data.csv")
-world <- ne_countries(scale = "medium", returnclass = "sf")
-
+  scale_color_brewer(palette = "Set1", na.value = "grey40") +
+  theme_minimal(base_size = 12)
+SDIClinic
 
 ```
 
-```{r}
-IHME_data <- IHME_data %>%
-  mutate(location = recode(location,
-    "Viet Nam"                               = "Vietnam",
-    "Venezuela(Bolivarian Republic of)"      = "Venezuela",
-    "Syrian Arab Republic"                   = "Syria",
-    "Republic of Korea"   = "South Korea",
-    "Democratic People's Republic of Korea"  = "North Korea",
-    "Russian Federation"                     = "Russia",
-    "Taiwan(Province of China)"              = "Taiwan",
-    "United Republic of Tanzania"            = "Tanzania",
-    "Lao People's Democratic Republic"       = "Laos",
-    "Iran (Islamic Republic of)"             = "Iran",
-    "Republic of Moldova"                    = "Moldova",
-    "Eswatini"                               = "Swaziland",
-    "Bolivia (Plurinational State of)"       = "Bolivia",
-    "Democratic Republic of the Congo" = "Congo (Kinshasa)",
-    "Republic of the Congo" = "Congo (Brazzaville)",
-    "Micronesia (Federated States of)"   = "Micronesia",
-    "Marshall Islands"                   = "Marshall Is.",
-    "Northern Mariana Islands"           = "N. Mariana Is.",
-    "United States Virgin Islands"       = "U.S. Virgin Is.",
-    "Antigua and Barbuda"                = "Antigua",
-    "Saint Kitts and Nevis"              = "Saint Kitts",
-    "Dominican Republic"                 = "Dominican Rep.",
-    "Sao Tome and Principe"              = "Sao Tome & Principe",
-    "Saint Vincent and the Grenadines"   = "Saint Vincent",
-    "Cook Islands"                       = "Cook Is.",
-    "Solomon Islands"                    = "Solomon Is.",
-    "Equatorial Guinea"                  = "Eq. Guinea",
-    "Bosnia and Herzegovina"             = "Bosnia",
-    "Brunei Darussalam"                  = "Brunei",
-    "South Sudan"                        = "S. Sudan",
-    "Central African Republic"           = "Central African Rep.",
-    "Tokelau"                            = "Tokelau"   # may not exist in world map
+**Result (SDI and trial–burden mismatch).**
 
-  ))
+There is a clear association between socio-demographic development (SDI) and the alignment between clinical trial activity and cancer burden. Countries with **higher SDI values** tend to have **positive trial–burden mismatch scores**, indicating that they host a larger share of clinical trials relative to their share of global cancer DALYs. In contrast, many **lower-SDI countries** exhibit negative mismatch values, reflecting **underrepresentation in clinical trials** despite substantial disease burden.
 
-```
+The SDI–mismatch scatterplot shows an upward trend: as SDI increases, countries are more likely to be overrepresented in clinical trials. High-SDI countries cluster above the zero line (log₂ mismatch > 0), whereas low- and middle-SDI countries more frequently fall below it.
 
+This pattern suggests that clinical trial activity is strongly influenced by national capacity rather than burden alone. Higher SDI countries generally have greater research infrastructure, regulatory capacity, funding availability, and established academic–industry networks, making them more attractive sites for clinical trials. Meanwhile, lower SDI countries may face structural barriers to trial participation, including limited infrastructure, fewer trained personnel, and underrepresentation in international trial registries.
 
-```{r, eval=FALSE}
-top4<- IHME_data%>%
-  group_by(cause)%>%
-  summarise(val = mean(val))%>%
-  arrange(desc(val))
-```
+Socio-demographic development plays a critical role in shaping where cancer clinical trials occur. Even when disease burden is high, countries with lower SDI are less likely to host clinical trials, reinforcing global inequities in access to cancer research and innovation.
 
-**Visualization**
-```{r}
-world <- ne_countries(returnclass = "sf")
+Several questions remain unanswered by this analysis. It is unclear whether cancers that are underrepresented in clinical trials experience slower treatment development or worse patient outcomes over time. Future research could examine how trial funding, pharmaceutical incentives, and regulatory barriers influence which cancers receive the most research attention. Additionally, it remains unknown whether expanding clinical trial access in lower-SDI countries would meaningfully reduce global cancer mortality or improve equity in treatment availability.
 
-focus_cause <- "Stomach cancer"
+## Unanswered Questions/Limitations
 
-focus_cause2 <- "Tracheal, bronchus, and lung cancer"
+Several unanswered questions remain from this analysis. It is unclear whether cancers that are underrepresented in clinical trials experience slower treatment development or worse patient outcomes over time. Future research could examine how trial funding and structural incentives influence which cancers receive the most research attention. In addition, it remains unclear whether expanding clinical trial efforts in lower-SDI countries would directly reduce disease burden or improve equity in treatment availability.
 
-focus_cause3 <- "Breast cancer"
+The limitations of this study include treating all clinical trials equally, even though they differ widely in size, phase, and impact. Another important limitation is that trial location may not fully reflect who benefits from the research, as many studies enroll patients across multiple countries. In addition, individuals who participate in clinical trials already have a cancer diagnosis, which may influence participation patterns and access. Clinical trial registries may also underrepresent certain regions due to inconsistent reporting, even when using both NIH and WHO datasets. Finally, DALY and mortality rates do not fully capture all aspects of disease severity or other clinical needs of patients.
 
-focus_cause4 <- "Colon and rectum cancer"
+## Project Contribution
 
-ihme_map_stomach <- IHME_data %>%
-  filter(cause == focus_cause, 
-         measure == "Deaths", 
-         metric == "Rate") %>%
-  group_by(location) %>%
-  summarise(val = mean(val, na.rm = TRUE), .groups="drop")
+Gregory was primarily responsible for much of the written components of the project and for analyzing overall trends and summary statistics. Khalessi focused on cleaning and standardizing the NIH ClinicalTrials.gov data, including the use of large language models to process unstructured trial information. Scarlett focused on geographic trends and the creation of visualizations, including mapping clinical trials and disease burden across regions.
 
-
-mapdata <- world %>%
-  left_join(ihme_map_stomach, by = c("name" = "location"))
-
-Liver_cancer <- ggplot(mapdata) +
-  geom_sf(aes(fill = val), color = "white", size = 0.2) +
-  labs(caption = "Age-standardized death rate for Stomach cancer",
-       fill = "Rate per 100k") +
-  theme_classic()+
-  theme(
-    plot.caption = element_text(hjust = 0.5, size = 14),  
-    plot.caption.position = "plot")+
-  scale_fill_stepsn(
-  colours = c("#1a9850", "#fee08b", "#d73039"),
-  breaks = c(5, 10, 15, 20, 30, 40, 60), 
-  na.value = "grey90",
-  name = "Rate per 100k"
-)
-
-```
-
-
-```{r}
-ihme_map_lung <- IHME_data %>%
-  filter(cause == focus_cause2, 
-         measure == "Deaths", 
-         metric == "Rate") %>%
-  group_by(location) %>%
-  summarise(val = mean(val, na.rm = TRUE), .groups="drop")
-
-
-mapdata2 <- world %>%
-  left_join(ihme_map_lung, by = c("name" = "location"))
-
-Lung_cancer <- ggplot(mapdata2) +
-  geom_sf(aes(fill = val), color = "white", size = 0.2) +
-  labs(caption = "Age-standardized death rate for Tracheal, bronchus, and Lung cancer",
-       fill = "Rate per 100k") +
-  theme_classic()+
-  theme(
-    plot.caption = element_text(hjust = 0.5, size = 14),  
-    plot.caption.position = "plot")+
-  scale_fill_stepsn(
-  colours = c("#1a9850", "#fee08b", "#d73039"),
-  breaks = c(5, 10, 15, 20, 30, 40, 60), 
-  na.value = "grey90",
-  name = "Rate per 100k"
-)
-```
-
-```{r}
-ihme_map_breast <- IHME_data %>%
-  filter(cause == focus_cause3, 
-         measure == "Deaths", 
-         metric == "Rate") %>%
-  group_by(location) %>%
-  summarise(val = mean(val, na.rm = TRUE), .groups="drop")
-
-
-mapdata3 <- world %>%
-  left_join(ihme_map_breast, by = c("name" = "location"))
-
-Breast_cancer <- ggplot(mapdata3) +
-  geom_sf(aes(fill = val), color = "white", size = 0.2) +
-  labs(caption = "Age-standardized death rate for Breast cancer",
-       fill = "Rate per 100k") +
-  theme_classic()+
-  theme(
-    plot.caption = element_text(hjust = 0.5, size = 14),  
-    plot.caption.position = "plot")+
-  scale_fill_stepsn(
-  colours = c("#1a9850", "#fee08b", "#d73039"),
-  breaks = c(5, 10, 15, 20, 30, 40, 60), 
-  na.value = "grey90",
-  name = "Rate per 100k"
-)
-```
-
-```{r}
-ihme_map_colon <- IHME_data %>%
-  filter(cause == focus_cause4, 
-         measure == "Deaths", 
-         metric == "Rate") %>%
-  group_by(location) %>%
-  summarise(val = mean(val, na.rm = TRUE), .groups="drop")
-
-
-mapdata4 <- world %>%
-  left_join(ihme_map_colon, by = c("name" = "location"))
-
-Colon_cancer <- ggplot(mapdata4) +
-  geom_sf(aes(fill = val), color = "white", size = 0.2) +
-  labs(caption = "Age-standardized death rate for Colon and Rectum cancer",
-       fill = "Rate per 100k") +
-  theme_classic() +
-  theme(
-    plot.caption = element_text(hjust = 0.5, size = 14),  
-    plot.caption.position = "plot")+
-  scale_fill_stepsn(
-  colours = c("#1a9850", "#fee08b", "#d73039"),
-  breaks = c(5, 10, 15, 20, 30, 40, 60), 
-  na.value = "grey90",
-  name = "Rate per 100k"
-)
-```
-
-**Final Visual**
-```{r fig.alt="Four world maps showing age-standardized cancer mortality rates for stomach, lung, colorectal, and breast cancer. Data from the Global Burden of Disease study.", fig.width=13, fig.height=8}
-combined <- ggarrange(Liver_cancer, 
-                              Lung_cancer, 
-                              Colon_cancer, 
-                              Breast_cancer, 
-                              ncol = 2, nrow = 2, 
-                              widths = c(2, 2),     
-                              heights = c(2, 2)
-                              )
-
-final_cancer_map <- annotate_figure(
-  combined,
-  top = text_grob("Global Age-standardized Cancer Mortality Rates", 
-                  size = 18, hjust = 0.5)
-)
-
-final_cancer_map
-```
-
- 
-- This visualization shows global patterns in age-standardized cancer mortality rates for the top four cancer types: stomach, lung, colorectal, and breast cancer. The data come from the Global Burden of Disease (GBD) study conducted by the Institute for Health Metrics and Evaluation (IHME). Each panel presents a world map shaded by deaths per 100,000 people. The color scale is consistent across all panels: green represents relatively lower mortality, while orange and red indicate relatively higher mortality. Some territories appear in grey, reflecting areas where GBD does not provide data.  
-
-- Some key finding are that lung cancer mortality is especially high in Eastern Europe and East Asia, regions which might relate to smoking rates and air pollution. In contrast, breast cancer mortality is relatively low in wealthier countries with strong screening and treatment programs, but higher in parts of sub-Saharan Africa where access to health care is more limited. 
-
-
-
+## Ai Useage
+AI was used to improve visualizations, check spelling and grammar, and assist with standardizing data within the llm.
 

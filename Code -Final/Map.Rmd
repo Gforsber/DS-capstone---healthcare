@@ -20,13 +20,12 @@ library(ggpubr)
 ```{r}
 library(readr)
 gbd_cn <- read_csv("../Data/gbd_cn.csv")
-# View(gbd_cn)
 
 gbd_country <- read_csv("../Data/gbd_country.csv")
-#View(gbd_country)
+
 
 clinic_cn <- read_csv("../Data/clinic_cn.csv")
-#View(clinic_cn)
+
 
 unique(gbd_country$measure)
 ```

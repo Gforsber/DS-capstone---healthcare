@@ -371,6 +371,7 @@ the Global Burden of Disease dataset).</p>
 </li>
 <li><a href="#data-sources">Data Sources</a><br />
 </li>
+<li><a href="#Required-R-Libraries">Required R Libraries</a></li>
 <li><a href="#dependencies">Dependencies</a></li>
 </ol>
 <hr />
@@ -427,11 +428,29 @@ informing priorities for future clinical research efforts.</p>
 <pre><code>
 ├── Code/
 │   ├── Clean.R              # Clean data with LLM
-│   ├── Visual.R 
+│   ├── Visual.R
+|   ├── FP4.R                #FP4 central code and report
+|   ├── Exploration.QMD
+
+├── Code- Final/
+│   ├── Captone_final.RMD             # Final report
+
+├── Data-Final/
+│   ├──  clinic_cn.csv      # Cleaned clinical trial data with standardized cancer condition names 
+│   ├──  clinic2.0.csv      # Full, cleaned clinical trials dataset
+│   ├──  gbd_cn.csv          
+│   ├──  gbd_country.csv
+│   ├──  gbd_metric.csv
+│   ├──  SDI.csv
 
 ├── Data/
 │   ├── ctg_clean.csv
 │   ├── gbd_death.csv
+│   ├── IHME-GBD_2021_DATA-eae6be09-1.csv
+│   ├── IHME-GBD_2021_DATA-12473b24-1.csv
+│   ├── ctg_clean.csv
+│   ├── gbd_death.csv
+│   ├── IHME_data.csv
 
 ├── Result/
 │   ├── Clinical Trial Share vs. Death Share by Cancer Type.png 
@@ -494,6 +513,38 @@ CTG</li>
 <li><strong>Both sexes</strong></li>
 <li><strong>All ages</strong></li>
 <li><strong>Most recent year</strong> available per cancer type</li>
+</ul>
+<hr />
+</div>
+</div>
+<div id="required-r-libraries" class="section level2">
+<h2>Required R Libraries</h2>
+<p>The following R packages are required to reproduce the data
+processing, analysis, and visualization in this project:</p>
+<pre class="r"><code>library(ellmer)      # LLM-assisted data cleaning and normalization
+library(tidyverse)   # Core data manipulation and visualization
+library(furrr)       # Parallel processing with purrr
+library(kableExtra)  # Publication-quality tables
+library(jsonlite)    # JSON parsing and handling
+library(dplyr)       # Data wrangling
+library(readr)       # Reading CSV files
+library(httr2)       # API requests
+library(purrr)       # Functional programming tools
+library(tibble)      # Tidy data frames
+library(stringr)     # String manipulation
+library(scales)      # Axis and scale formatting
+library(ggpubr)      # Publication-ready ggplot extensions
+library(ggrepel)     # Non-overlapping text labels
+library(forcats)     # Factor handling</code></pre>
+<div id="notes" class="section level3">
+<h3>Notes</h3>
+<ul>
+<li>All analyses were conducted in <strong>R</strong> using
+tidyverse-based workflows.</li>
+<li>Parallelization (<code>furrr</code>) was used for large-scale data
+processing tasks.</li>
+<li>Visualization libraries support publication-quality figures for the
+final report.</li>
 </ul>
 <hr />
 </div>
